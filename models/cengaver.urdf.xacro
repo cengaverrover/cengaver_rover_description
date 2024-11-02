@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot
+  name="cengaver_rover" xmlns:xacro="http/www.ros.org/wiki/xacro">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.0402667268657193 0.0299985254624576 -0.0109073304469517"
+        rpy="0 0 0" />
+      <mass
+        value="0.119812608016805" />
+      <inertia
+        ixx="6.9211953457871E-05"
+        ixy="-7.46743224179055E-09"
+        ixz="3.4034668691815E-08"
+        iyy="9.42191243440966E-05"
+        iyz="1.06286656876904E-08"
+        izz="0.000153318886215789" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="wheel1">
+    <inertial>
+      <origin
+        xyz="0 0 0.004"
+        rpy="0 0 0" />
+      <mass
+        value="0.00235619449019235" />
+      <inertia
+        ixx="7.51527867600935E-08"
+        ixy="-3.74939945665465E-42"
+        ixz="0"
+        iyy="7.51527867600934E-08"
+        iyz="-2.06414938407317E-40"
+        izz="1.25172832291468E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint1"
+    type="continuous">
+    <origin
+      xyz="0.0186602540378445 -0.0145 -0.03"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="wheel1" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="wheel2">
+    <inertial>
+      <origin
+        xyz="-1.38777878078145E-17 -6.93889390390723E-18 0.00399999999999999"
+        rpy="0 0 0" />
+      <mass
+        value="0.00235619449019235" />
+      <inertia
+        ixx="7.51527867600934E-08"
+        ixy="-3.74939945665488E-42"
+        ixz="1.10290748340406E-25"
+        iyy="7.51527867600933E-08"
+        iyz="-2.06414938407317E-40"
+        izz="1.25172832291468E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint2"
+    type="continuous">
+    <origin
+      xyz="0.0186602540378445 0.0825 -0.03"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="wheel2" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <link
+    name="wheel3">
+    <inertial>
+      <origin
+        xyz="0 -1.38777878078145E-17 -0.004"
+        rpy="0 0 0" />
+      <mass
+        value="0.00235619449019235" />
+      <inertia
+        ixx="7.51527867600934E-08"
+        ixy="3.30872245021211E-24"
+        ixz="1.15917371422291E-24"
+        iyy="7.51527867600934E-08"
+        iyz="6.59779123110178E-25"
+        izz="1.25172832291468E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint3"
+    type="continuous">
+    <origin
+      xyz="-0.0986602540378445 0.0825 -0.03"
+      rpy="1.5707963267949 0.39309481042652 3.14159265358979" />
+    <parent
+      link="base_link" />
+    <child
+      link="wheel3" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <link
+    name="wheel4">
+    <inertial>
+      <origin
+        xyz="-8.67361737988404E-19 0 0.004"
+        rpy="0 0 0" />
+      <mass
+        value="0.00235619449019235" />
+      <inertia
+        ixx="7.51527867600935E-08"
+        ixy="-3.74939945665465E-42"
+        ixz="0"
+        iyy="7.51527867600934E-08"
+        iyz="-2.06414938407317E-40"
+        izz="1.25172832291468E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://cengaver_rover/meshes/wheel4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint4"
+    type="continuous">
+    <origin
+      xyz="-0.0986602540378445 -0.0145 -0.03"
+      rpy="1.5707963267949 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="wheel4" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+</robot>
