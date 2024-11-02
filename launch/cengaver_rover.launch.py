@@ -16,7 +16,7 @@ def generate_launch_description():
   # Set the path to different files and folders.
   pkg_share = FindPackageShare(package='cengaver_rover').find('cengaver_rover')
   default_launch_dir = os.path.join(pkg_share, 'launch')
-  default_model_path = os.path.join(pkg_share, 'models/cengaver.urdf.xacro')
+  default_model_path = os.path.join(pkg_share, 'models/cengaver.urdf')
   robot_name_in_urdf = 'cengaver_rover'
   default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
   
