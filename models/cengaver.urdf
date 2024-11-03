@@ -41,6 +41,11 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="base_link">
+    <material>PR2/Grey1   </material>
+  </gazebo>
+
   <link
     name="wheel1">
     <inertial>
@@ -81,6 +86,11 @@
       </geometry>
     </collision>
   </link>
+  
+  <gazebo reference="wheel1">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
   <joint
     name="Joint1"
     type="continuous">
@@ -134,6 +144,11 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="wheel2">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
   <joint
     name="Joint2"
     type="continuous">
@@ -187,6 +202,11 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="wheel3">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
   <joint
     name="Joint3"
     type="continuous">
@@ -240,6 +260,11 @@
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="wheel4">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
   <joint
     name="Joint4"
     type="continuous">
