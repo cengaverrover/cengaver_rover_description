@@ -73,7 +73,8 @@ def generate_launch_description():
     condition=IfCondition(gui),
     package='joint_state_publisher_gui',
     executable='joint_state_publisher_gui',
-    name='joint_state_publisher_gui')
+    name='joint_state_publisher_gui',
+    parameters=[{'use_sim_time': use_sim_time}])
 
   # Subscribe to the joint states of the robot, and publish the 3D pose of each link.
   start_robot_state_publisher_cmd = Node(
