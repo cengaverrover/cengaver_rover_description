@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cengaver_rover">
+    
+    <xacro:include filename="cengaver_core.xacro" />
+
+</robot>
