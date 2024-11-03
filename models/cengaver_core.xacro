@@ -62,6 +62,10 @@
         
     </link>
 
+    <gazebo reference="chassis">
+        <material>PR2/Grey1   </material>
+      </gazebo>
+
     <!-- FRONT LEFT WHEEL LINK -->
 
     <joint name="front_left_wheel_joint" type="continuous">
@@ -106,6 +110,10 @@
               izz="0.0127489505715837" />
           </inertial>
     </link>
+
+    <gazebo reference="front_left_wheel">
+        <material>Gazebo/Red</material>
+      </gazebo>
 
     <!-- FRONT RIGHT WHEEL LINK -->
 
@@ -152,6 +160,10 @@
           </inertial>
     </link>
 
+    <gazebo reference="front_right_wheel">
+        <material>Gazebo/Red</material>
+      </gazebo>
+
     <!-- BACK LEFT WHEEL LINK -->
 
     <joint name="back_left_wheel_joint" type="continuous">
@@ -197,6 +209,9 @@
           </inertial>
     </link>
 
+    <gazebo reference="back_left_wheel">
+        <material>Gazebo/Black</material>
+      </gazebo>
 
     <!-- BACK RIGHT WHEEL LINK -->
 
@@ -243,5 +258,8 @@
           </inertial>
     </link>
 
+    <gazebo reference="back_right_wheel">
+        <material>Gazebo/Red</material>
+      </gazebo>
 
 </robot>
