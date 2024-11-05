@@ -3,4 +3,6 @@
     
     <xacro:include filename="cengaver_core.xacro" />
     <xacro:include filename="gazebo_control.xacro"/>
+    <xacro:include filename="$(find cengaver_rover)/models/lidar.xacro" />
+    <xacro:include filename="camera.xacro" />
 </robot>
