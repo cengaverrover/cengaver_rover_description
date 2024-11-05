@@ -33,10 +33,20 @@ def generate_launch_description():
     default_value=default_model_path, 
     description='Absolute path to robot urdf file')
     
+  declare_rviz_config_file_cmd = DeclareLaunchArgument(
+    name='rviz_config_file',
+    default_value=default_rviz_config_path,
+    description='Full path to the RVIZ config file to use')
+      
   declare_use_robot_state_pub_cmd = DeclareLaunchArgument(
     name='use_robot_state_pub',
     default_value='True',
     description='Whether to start the robot state publisher')
+
+  declare_use_rviz_cmd = DeclareLaunchArgument(
+    name='use_rviz',
+    default_value='True',
+    description='Whether to start RVIZ')
     
   declare_use_sim_time_cmd = DeclareLaunchArgument(
     name='use_sim_time',
@@ -55,17 +65,27 @@ def generate_launch_description():
     'robot_description': Command(['xacro ', model])}],
     arguments=[default_model_path])
 
- 
+  # Launch RViz
+  start_rviz_cmd = Node(
+    condition=IfCondition(use_rviz),
+    package='rviz2',
+    executable='rviz2',
+    name='rviz2',
+    output='screen',
+    arguments=['-d', rviz_config_file])
   
   # Create the launch description and populate
   ld = LaunchDescription()
 
   # Declare the launch options
   ld.add_action(declare_model_path_cmd)
+  ld.add_action(declare_rviz_config_file_cmd)
   ld.add_action(declare_use_robot_state_pub_cmd)  
+  ld.add_action(declare_use_rviz_cmd) 
   ld.add_action(declare_use_sim_time_cmd)
 
   # Add any actions
   ld.add_action(start_robot_state_publisher_cmd)
+  ld.add_action(start_rviz_cmd)
 
   return ld
