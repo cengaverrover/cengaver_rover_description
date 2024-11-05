@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cengaver_rover">
     
-    <xacro:include filename="cengaver_core.xacro" />
-    <xacro:include filename="gazebo_control.xacro"/>
+    <xacro:include filename="$(find cengaver_rover_description)/models/cengaver_core.xacro" />
+    <xacro:include filename="$(find cengaver_rover_description)/models/gazebo_control.xacro"/>
     <xacro:include filename="$(find cengaver_rover_description)/models/lidar.xacro" />
-    <xacro:include filename="camera.xacro" />
+    <xacro:include filename="$(find cengaver_rover_description)/models/camera.xacro" />
 </robot>
