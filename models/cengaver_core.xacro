@@ -33,7 +33,7 @@
                 xyz="0 0 -0.18"
                 rpy="0 0 ${pi/2}" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/base_link.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/base_link.STL" />
             </geometry>
             <material name="chassis_material" />
         </visual>
@@ -42,7 +42,7 @@
                 xyz="0 0 -0.18"
                 rpy="0 0 ${pi/2}" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/base_link.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/base_link.STL" />
             </geometry>
         </collision>
         <inertial>
@@ -83,7 +83,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
             <material name="red_wheel_material" />
         </visual>
@@ -92,7 +92,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
         </collision>
         <inertial>
@@ -132,7 +132,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
             <material name="red_wheel_material" />
         </visual>
@@ -141,7 +141,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
         </collision>
         <inertial>
@@ -181,7 +181,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
             <material name="black_wheel_material" />
         </visual>
@@ -190,7 +190,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
         </collision>
         <inertial>
@@ -230,7 +230,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
             <material name="red_wheel_material" />
         </visual>
@@ -239,7 +239,7 @@
                 xyz="0 0 0"
                 rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://cengaver_rover/meshes/wheel1.STL" />
+                <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL" />
             </geometry>
         </collision>
         <inertial>

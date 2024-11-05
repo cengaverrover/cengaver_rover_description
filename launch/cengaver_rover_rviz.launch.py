@@ -14,7 +14,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
 
   # Set the path to different files and folders.
-  pkg_share = FindPackageShare(package='cengaver_rover').find('cengaver_rover')
+  pkg_share = FindPackageShare(package='cengaver_rover_description').find('cengaver_rover_description')
   default_launch_dir = os.path.join(pkg_share, 'launch')
   default_model_path = os.path.join(pkg_share, 'models/cengaver.urdf.xacro')
   robot_name_in_urdf = 'cengaver_rover'

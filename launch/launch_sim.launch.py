@@ -17,11 +17,11 @@ def generate_launch_description():
     # Include the robot_state_publisher launch file, provided by our own package. Force sim time to be enabled
     # !!! MAKE SURE YOU SET THE PACKAGE NAME CORRECTLY !!!
 
-    package_name='cengaver_rover' #<--- CHANGE ME
+    package_name='cengaver_rover_description' #<--- CHANGE ME
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','cengaver_rover.launch.py'
+                    get_package_share_directory(package_name),'launch','cengaver_rover_rviz.launch.py'
                 )]), launch_arguments={'use_sim_time': 'true'}.items()
     )
 
