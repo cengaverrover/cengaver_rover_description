@@ -1,10 +1,14 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
+    <material name="red_camera">
+        <color rgba="1 0 0 1" />
+    </material>
+
     <joint name="camera_joint" type="fixed">
         <parent link="chassis"/>
         <child link="camera_link"/>
-        <origin xyz="0.305 0 0.08" rpy="0 0 0"/>
+        <origin xyz="0.205 0 0.08" rpy="0 0 0"/>
     </joint>
 
     <link name="camera_link">
@@ -12,7 +16,7 @@
             <geometry>
                 <box size="0.010 0.03 0.03"/>
             </geometry>
-            <material name="red"/>
+            <material name="red_camera"/>
         </visual>
     </link>
 
@@ -53,4 +57,3 @@
     </gazebo>
 
 </robot>
-
