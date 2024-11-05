@@ -45,3 +45,10 @@ To launch the Cengaver Rover simulation in Gazebo, use the following command:
 ```sh
 ros2 launch cengaver_rover_description launch_sim.launch.py
 ```
+### Launch robot_state_publisher with foxglove_bridge
+To launch Cengaver Rover robot_state_publisher with foxglove_bridge, use the following command:
+
+```sh
+ros2 launch cengaver_rover_description cengaver_rover_description_foxglove.launch.py
+```
+
