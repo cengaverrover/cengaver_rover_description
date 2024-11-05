@@ -23,7 +23,7 @@ This package contains the URDF (Unified Robot Description Format) files and laun
 
 ## Usage
 
-### Launch the only the robot_state_publisher for urdf
+### Launch only the robot_state_publisher for the urdf
 
 To launch robot_state_publisher for Cengaver Rover without joint_state_publisher, use the following command:
 
