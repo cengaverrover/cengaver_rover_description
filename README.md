@@ -1,4 +1,4 @@
-# Cengaver Rover
+# Cengaver Rover Description
 
 This package contains the URDF (Unified Robot Description Format) files and launch files for the Cengaver Rover, a mobile robot simulation using ROS 2 and Gazebo.
 
