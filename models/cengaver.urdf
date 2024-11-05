@@ -27,14 +27,14 @@
     <visual>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.18"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/base_link.STL"/>
+        <mesh filename="../meshes/base_link.STL"/>
       </geometry>
       <material name="chassis_material"/>
     </visual>
     <collision>
       <origin rpy="0 0 1.5707963267948966" xyz="0 0 -0.18"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/base_link.STL"/>
+        <mesh filename="../meshes/base_link.STL"/>
       </geometry>
     </collision>
     <inertial>
@@ -57,14 +57,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
       <material name="red_wheel_material"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
     </collision>
     <inertial>
@@ -87,14 +87,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
       <material name="red_wheel_material"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
     </collision>
     <inertial>
@@ -117,14 +117,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
       <material name="black_wheel_material"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
     </collision>
     <inertial>
@@ -147,14 +147,14 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
       <material name="red_wheel_material"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://cengaver_rover_description/meshes/wheel1.STL"/>
+        <mesh filename="../meshes/wheel1.STL"/>
       </geometry>
     </collision>
     <inertial>
