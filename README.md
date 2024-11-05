@@ -23,10 +23,17 @@ This package contains the URDF (Unified Robot Description Format) files and laun
 
 ## Usage
 
+### Launch the rviz visualizer
+
+To launch robot_state_publisher for Cengaver Rover without joint_state_publisher, use the following command:
+
+```sh
+ros2 launch cengaver_rover_description cengaver_rover_description.launch.py
+```
 
 ### Launch the rviz visualizer
 
-To launch the Cengaver Rover simulation in Gazebo, use the following command:
+To view the Cengaver Rover in rviz with joint_state_publisher_gui, use the following command:
 
 ```sh
 ros2 launch cengaver_rover_description cengaver_rover_rviz.launch.py
