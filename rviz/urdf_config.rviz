@@ -10,8 +10,9 @@ Panels:
         - /TF1
         - /RobotModel2
         - /LaserScan1
+        - /Map1
       Splitter Ratio: 0.5
-    Tree Height: 291
+    Tree Height: 287
 Visualization Manager:
   Class: ""
   Displays:
@@ -61,6 +62,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        base_footprint:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         base_link:
           Alpha: 1
           Show Axes: false
@@ -111,6 +116,8 @@ Visualization Manager:
           Value: true
         back_right_wheel:
           Value: true
+        base_footprint:
+          Value: true
         base_link:
           Value: true
         camera_link:
@@ -125,6 +132,8 @@ Visualization Manager:
           Value: true
         laser_frame:
           Value: true
+        map:
+          Value: true
         odom:
           Value: true
       Marker Scale: 0.30000001192092896
@@ -138,6 +147,8 @@ Visualization Manager:
             {}
           back_right_wheel:
             {}
+          base_footprint:
+            {}
           chassis:
             camera_link:
               camera_link_optical:
@@ -148,6 +159,8 @@ Visualization Manager:
             {}
           front_right_wheel:
             {}
+        map:
+          {}
         odom:
           {}
       Update Interval: 0
@@ -200,7 +213,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.009999999776482582
+      Size (m): 0.02500000037252903
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -228,10 +241,32 @@ Visualization Manager:
       Visibility:
         Grid: true
         LaserScan: true
+        Map: true
         RobotModel: true
         TF: true
         Value: true
       Zoom Factor: 1
+    - Alpha: 0.699999988079071
+      Class: rviz_default_plugins/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map
+      Update Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map_updates
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -300,7 +335,7 @@ Window Geometry:
   Height: 923
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000021400000328fc0200000002fb000000100044006900730070006c006100790073010000004c000001c7000000fd01000003fb0000000c00430061006d0065007200610100000214000001600000002e01000003000002cf0000032800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000001000000000000021400000324fc0200000002fb000000100044006900730070006c006100790073010000004e000001c5000000ff01000003fb0000000c00430061006d00650072006101000002140000015e0000002e01000003000002cf0000032400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Width: 1252
   X: 660
   Y: 71
