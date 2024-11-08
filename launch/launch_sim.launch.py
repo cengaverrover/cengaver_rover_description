@@ -21,7 +21,7 @@ def generate_launch_description():
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','cengaver_rover_rviz_no_joint_state.launch.py'
+                    get_package_share_directory(package_name),'launch','rviz_no_joint_state.launch.py'
                 )]), launch_arguments={'use_sim_time': 'true'}.items()
     )
 
