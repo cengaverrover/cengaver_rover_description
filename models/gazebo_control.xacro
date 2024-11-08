@@ -20,32 +20,27 @@
     </gazebo>
 
     <gazebo>
-        <plugin name="differential_drive_controller_front" filename="libgazebo_ros_diff_drive.so">
+        <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+
+            <num_wheel_pairs>2</num_wheel_pairs>
             <left_joint>front_left_wheel_joint</left_joint>
+            <left_joint>back_left_wheel_joint</left_joint>
+
             <right_joint>front_right_wheel_joint</right_joint>
+            <right_joint>back_right_wheel_joint</right_joint>
+
             <wheel_separation>${(0.27998 + 0.114)*2}</wheel_separation>
             <wheel_diameter>${2*0.11736}</wheel_diameter>
+
+            <!-- limits -->
+            <max_wheel_torque>500</max_wheel_torque>
+            <max_wheel_acceleration>2.0</max_wheel_acceleration>
+
             <!-- Output -->
             <odometry_frame>odom</odometry_frame>
             <robot_base_frame>base_link</robot_base_frame>
 
             <publish_odom>true</publish_odom>
-            <publish_odom_tf>true</publish_odom_tf>
-            <publish_wheel_tf>true</publish_wheel_tf>
-        </plugin>
-    </gazebo>
-
-    <gazebo>
-        <plugin name="differential_drive_controller_back" filename="libgazebo_ros_diff_drive.so">
-            <left_joint>back_left_wheel_joint</left_joint>
-            <right_joint>back_right_wheel_joint</right_joint>
-            <wheel_separation>${(0.27998 + 0.114)*2}</wheel_separation>
-            <wheel_diameter>${2*0.11736}</wheel_diameter>
-            <!-- Output -->
-            <odometry_frame>odom</odometry_frame>
-            <robot_base_frame>base_link</robot_base_frame>
-
-            <publish_odom>false</publish_odom>
             <publish_odom_tf>true</publish_odom_tf>
             <publish_wheel_tf>true</publish_wheel_tf>
         </plugin>
