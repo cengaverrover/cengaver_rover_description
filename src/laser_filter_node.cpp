@@ -43,26 +43,24 @@ private:
 
     std::string inputTopic_ { "scan_raw" };
     std::string outputTopic_ { "scan" };
-    std::vector<double> filteredRanges_ {};
+    std::vector<double> filteredRanges_ {1.0, 2.0};
 
     void laser_subscription_callback(const sensor_msgs::msg::LaserScan& msg) const {
 
-        auto filteredMsg = msg;
-
+        sensor_msgs::msg::LaserScan filteredMsg = msg;
+        msg.header.stamp = this->get_clock()->now();
         size_t rangeCount = filteredRanges_.size() / 2;
-
-        const float lidar_total_range = msg.angle_max - msg.angle_min;
-        for (int i = 0; i < rangeCount; i++) {
-            const int filterStartIndex = filteredRanges_[i] / msg.angle_increment;
-            const int filterEndIndex = filteredRanges_[i + 1] / msg.angle_increment;
-            for (int j = filterStartIndex; j < filterEndIndex; j++) {
+        for (size_t i = 0; i < rangeCount; i++) {
+            const size_t filterStartIndex = (filteredRanges_[i] - msg.angle_min) / msg.angle_increment;
+            const size_t filterEndIndex = (filteredRanges_[i + 1] - msg.angle_min) / msg.angle_increment;
+            for (size_t j = filterStartIndex; j < filterEndIndex; j++) {
                 if (j < msg.ranges.size()) {
                     // Set the range reading to a value higher than the max so that they will be discarded as it is assumed the laser did not return back to the lidar.
                     filteredMsg.ranges[j] = msg.range_max * 2;
                 }
             }
         }
-        publisher_->publish(msg);
+        publisher_->publish(filteredMsg);
     }
 };
 
