@@ -31,42 +31,19 @@ This package contains the URDF (Unified Robot Description Format) files and laun
 To launch robot_state_publisher for Cengaver Rover without joint_state_publisher, use the following command:
 
 ```sh
-#robot_state_publisher only:
-ros2 launch cengaver_rover_description description.launch.py
-#robot_state_publisher on foxglove_bridge
-ros2 launch cengaver_rover_description description_foxglove.launch.py
+ros2 launch cengaver_rover_description rsp.launch.py
 ```
 
-### Launch the rviz visualizer
-
-To view the Cengaver Rover in rviz with joint_state_publisher_gui, use the following command:
-
-```sh
-ros2 launch cengaver_rover_description rviz_joint_state.launch.py
-#or
-ros2 launch cengaver_rover_description rviz_no_joint_state.launch.py
-```
-### Launch the Simulation
+### Launch simulation
 
 To launch the Cengaver Rover simulation in Gazebo and rviz, use the following command:
 ```sh
-#For empty world:
 ros2 launch cengaver_rover_description launch_sim.launch.py
-#For empty world with foxglove bridge:
-ros2 launch cengaver_rover_description launch_sim_foxglove.launch.py
-
-# For cafe world:
-ros2 launch cengaver_rover_description launch_sim.launch.py world:=./src/cengaver_rover_description/worlds/cengaver_cafe.xml
-# For cafe world with foxglove bridge:
-ros2 launch cengaver_rover_description launch_sim_foxglove.launch.py world:=./src/cengaver_rover_description/worlds/cengaver_cafe.xml
 ```
 
 ### Launch slam simulation 
 ```sh
-#For rviz:
 ros2 launch cengaver_rover_description slam_sim.launch.py
-#For foxglove_bridge:
-ros2 launch cengaver_rover_description slam_sim_foxglove.launch.py
 ```
 
 
