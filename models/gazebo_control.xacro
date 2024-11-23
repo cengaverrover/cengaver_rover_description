@@ -21,6 +21,8 @@
 
     <gazebo>
         <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+            <!-- Plugin update rate in Hz -->
+            <updateRate>100</updateRate>
 
             <num_wheel_pairs>2</num_wheel_pairs>
             <left_joint>front_left_wheel_joint</left_joint>
@@ -40,6 +42,10 @@
             <odometry_frame>odom</odometry_frame>
             <robot_base_frame>base_link</robot_base_frame>
 
+            <odometry_source>0</odometry_source>
+
+            <!-- Set to true to publish sensor_msgs/JointState on /joint_states for the wheel joints, defaults to false -->
+            <publish_wheel_joint_state>true</publish_wheel_joint_state>
             <publish_odom>true</publish_odom>
             <publish_odom_tf>true</publish_odom_tf>
             <publish_wheel_tf>true</publish_wheel_tf>
