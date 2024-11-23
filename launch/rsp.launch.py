@@ -19,6 +19,7 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_ros2_control = LaunchConfiguration('use_ros2_control')
     use_foxglove_bridge = LaunchConfiguration('use_foxglove_bridge')
+    use_rviz= LaunchConfiguration('use_rviz')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -42,7 +43,25 @@ def generate_launch_description():
             condition=IfCondition(use_foxglove_bridge)
     )
     
-    laser_filter_params = {'input_topic': 'scan_raw', 'output_topic': 'scan', 'filtered_ranges': [-0.611, 0.611]}
+        # Create a foxglove_bridge
+    foxglove_bridge = IncludeLaunchDescription(
+            XMLLaunchDescriptionSource([os.path.join(
+                get_package_share_directory('foxglove_bridge'), 'launch', 'foxglove_bridge_launch.xml')]),
+            condition=IfCondition(use_foxglove_bridge)
+    )
+    
+    rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
+    rviz = Node(
+        condition=IfCondition(use_rviz),
+        package='rviz2',
+        executable='rviz2',
+         name='rviz2',
+        output='screen',
+        parameters=[{'use_sim_time': use_sim_time}],
+        arguments=['-d', rviz_config_path]
+    )
+    
+    laser_filter_params = {'input_topic': 'scan_raw', 'output_topic': 'scan', 'filtered_ranges': [-0.611, 0.611], 'use_sim_time': use_sim_time}
     laser_filter = Node(
         package='cengaver_rover_description',
         executable='laser_filter',
@@ -63,10 +82,15 @@ def generate_launch_description():
         DeclareLaunchArgument(
            'use_foxglove_bridge',
            default_value='true',
-           description='Use foxglove_bridge if true')
+           description='Use foxglove_bridge if true'),
+        DeclareLaunchArgument(
+           'use_rviz',
+           default_value='false',
+           description='Use rviz if true')
         ,
 
         node_robot_state_publisher,
         laser_filter,
-        foxglove_bridge
+        foxglove_bridge,
+        rviz        
     ])

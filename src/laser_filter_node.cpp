@@ -45,10 +45,10 @@ private:
     std::string outputTopic_ { "scan" };
     std::vector<double> filteredRanges_ {1.0, 2.0};
 
-    void laser_subscription_callback(const sensor_msgs::msg::LaserScan& msg) const {
+    void laser_subscription_callback(const sensor_msgs::msg::LaserScan& msg) {
 
         sensor_msgs::msg::LaserScan filteredMsg = msg;
-        msg.header.stamp = this->get_clock()->now();
+        filteredMsg.header.stamp = this->get_clock()->now();
         size_t rangeCount = filteredRanges_.size() / 2;
         for (size_t i = 0; i < rangeCount; i++) {
             const size_t filterStartIndex = (filteredRanges_[i] - msg.angle_min) / msg.angle_increment;
