@@ -21,7 +21,7 @@ def generate_launch_description():
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory(package_name),'launch','rviz_no_joint_state.launch.py'
+                    get_package_share_directory(package_name),'launch','launch_sim.launch.py'
                 )]), launch_arguments={'use_sim_time': 'true'}.items()
     )
     
@@ -32,25 +32,8 @@ def generate_launch_description():
                     get_package_share_directory(package_name), 'config', 'mapper_params_online_async.yaml')}.items()
     )
 
-    # Include the Gazebo launch file, provided by the gazebo_ros package
-    gazebo = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource([os.path.join(
-                    get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')]), launch_arguments={'world' : os.path.join(
-                    get_package_share_directory(package_name), 'worlds', 'cengaver_museum.xml')}.items()
-             )
-
-    # Run the spawner node from the gazebo_ros package. The entity name doesn't really matter if you only have a single robot.
-    spawn_entity = Node(package='gazebo_ros', executable='spawn_entity.py',
-                        arguments=['-topic', 'robot_description',
-                                   '-entity', 'cengaver_rover'],
-                        output='screen')
-
-
-
     # Launch them all!
     return LaunchDescription([
         rsp,
-        slam,
-        gazebo,
-        spawn_entity,
+        slam
     ])
