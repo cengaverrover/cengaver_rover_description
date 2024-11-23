@@ -30,8 +30,7 @@
 
             <right_joint>front_right_wheel_joint</right_joint>
             <right_joint>back_right_wheel_joint</right_joint>
-
-            <wheel_separation>${(0.27998 + 0.114)*2}</wheel_separation>
+            <wheel_separation>${0.394*2}</wheel_separation>
             <wheel_diameter>${2*0.11736}</wheel_diameter>
 
             <!-- limits -->
@@ -42,7 +41,7 @@
             <odometry_frame>odom</odometry_frame>
             <robot_base_frame>base_link</robot_base_frame>
 
-            <odometry_source>0</odometry_source>
+            <odometry_source>1</odometry_source>
 
             <!-- Set to true to publish sensor_msgs/JointState on /joint_states for the wheel joints, defaults to false -->
             <publish_wheel_joint_state>true</publish_wheel_joint_state>

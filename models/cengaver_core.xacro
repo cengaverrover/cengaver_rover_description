@@ -81,8 +81,8 @@
         <parent link="base_link" />
         <child link="front_left_wheel" />
         <origin
-            xyz="0.3379 ${0.27998 + 0.114} 0.11736"
-            rpy=" 0 -1.5708 -1.5708" />
+            xyz="0.338 0.394 0.117"
+            rpy=" 0 -1.571 -1.571" />
         <axis xyz="0 0 1" />
     </joint>
 
@@ -130,8 +130,8 @@
         <parent link="base_link" />
         <child link="front_right_wheel" />
         <origin
-            xyz="0.3379 ${-0.27998 - 0.114} 0.11736"
-            rpy=" 0 1.5708 -1.5708" />
+            xyz="0.338 -0.394 0.117"
+            rpy=" 0 1.571 -1.571" />
         <axis xyz="0 0 -1" />
     </joint>
 
@@ -179,8 +179,8 @@
         <parent link="base_link" />
         <child link="back_left_wheel" />
         <origin
-            xyz="-0.3379 ${0.27998 + 0.114} 0.11736"
-            rpy=" 0 -1.5708 -1.5708" />
+            xyz="-0.338 0.394 0.117"
+            rpy=" 0 -1.571 -1.571" />
         <axis xyz="0 0 1" />
     </joint>
 
@@ -228,8 +228,8 @@
         <parent link="base_link" />
         <child link="back_right_wheel" />
         <origin
-            xyz="-0.3379 ${-0.27998 - 0.114} 0.11736"
-            rpy=" 0 1.5708 -1.5708" />
+            xyz="-0.338 -0.394 0.117"
+            rpy=" 0 1.571 -1.571" />
         <axis xyz="0 0 -1" />
     </joint>
 
