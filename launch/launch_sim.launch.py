@@ -59,6 +59,7 @@ def generate_launch_description():
             package="controller_manager",
             executable="spawner",
             arguments=["diff_cont"],
+            remappings=[('/diff_cont/cmd_vel_unstamped', '/cmd_vel')]
         )
 
     joint_broad_spawner = Node(
