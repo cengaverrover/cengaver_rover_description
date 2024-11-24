@@ -41,7 +41,8 @@ def generate_launch_description():
     foxglove_bridge = IncludeLaunchDescription(
             XMLLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('foxglove_bridge'), 'launch', 'foxglove_bridge_launch.xml')]),
-            condition=IfCondition(use_foxglove_bridge)
+            condition=IfCondition(use_foxglove_bridge),
+            launch_arguments={'use_sim_time': use_sim_time, 'max_qos_depth': '400'}.items()
     )
     
     

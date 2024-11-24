@@ -33,7 +33,7 @@ public:
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
             std::bind(&LaserFilter::laser_subscription_callback, this, std::placeholders::_1));
         publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(outputTopic_,
-            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)));
+            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
 
     }
 
