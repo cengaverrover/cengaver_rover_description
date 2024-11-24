@@ -2,7 +2,8 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="cengaver_rover">
     
     <xacro:include filename="$(find cengaver_rover_description)/models/cengaver_core.xacro" />
-    <xacro:include filename="$(find cengaver_rover_description)/models/gazebo_control.xacro"/>
+    <!-- <xacro:include filename="$(find cengaver_rover_description)/models/gazebo_control.xacro" /> -->
+    <xacro:include filename="$(find cengaver_rover_description)/models/ros2_control.xacro" />
     <xacro:include filename="$(find cengaver_rover_description)/models/lidar.xacro" />
     <xacro:include filename="$(find cengaver_rover_description)/models/camera.xacro" />
     <xacro:include filename="$(find cengaver_rover_description)/models/imu.xacro" />
