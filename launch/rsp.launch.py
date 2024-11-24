@@ -18,8 +18,9 @@ def generate_launch_description():
     # Check if we're told to use sim time
     use_sim_time = LaunchConfiguration('use_sim_time')
     use_ros2_control = LaunchConfiguration('use_ros2_control')
-    use_foxglove_bridge = LaunchConfiguration('use_foxglove_bridge')
+    use_foxglove_bridge = LaunchConfiguration('use_foxglove')
     use_rviz= LaunchConfiguration('use_rviz')
+    use_twist_mux= LaunchConfiguration('use_twist_mux')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -42,6 +43,7 @@ def generate_launch_description():
                 get_package_share_directory('foxglove_bridge'), 'launch', 'foxglove_bridge_launch.xml')]),
             condition=IfCondition(use_foxglove_bridge)
     )
+
 
         # Create a foxglove_bridge
     foxglove_bridge = IncludeLaunchDescription(
@@ -68,6 +70,17 @@ def generate_launch_description():
         output='screen',
         parameters=[laser_filter_params]
     )
+    
+    twist_mux_params = {'use_sim_time': use_sim_time}
+    twist_mux = Node(
+        condition=IfCondition(use_twist_mux),
+        package='twist_mux',
+        executable='twist_mux',
+        output='screen',
+        parameters=[twist_mux_params],
+        arguments=['--params-file', os.path.join(
+                    pkg_path, 'config', 'twist_mux.yaml')] 
+    )
 
     # Launch!
     return LaunchDescription([
@@ -80,17 +93,22 @@ def generate_launch_description():
             default_value='false',
             description='Use ros2_control if true'),
         DeclareLaunchArgument(
-           'use_foxglove_bridge',
-           default_value='true',
+           'use_foxglove',
+           default_value='false',
            description='Use foxglove_bridge if true'),
         DeclareLaunchArgument(
            'use_rviz',
            default_value='false',
-           description='Use rviz if true')
-        ,
+           description='Use rviz if true'),
+        DeclareLaunchArgument(
+           'use_twist_mux',
+           default_value='false',
+           description='Use twist_mux if true'),
 
         node_robot_state_publisher,
         laser_filter,
         foxglove_bridge,
-        rviz
+        twist_mux,
+        rviz        
+
     ])
