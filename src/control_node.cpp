@@ -155,7 +155,6 @@ private:
             angular_velocity = (robotState_.right_side_velocity - robotState_.left_side_velocity) / wheel_separation_;
         }
 
-
         double delta_heading = angular_velocity * robotState_.vel_dt;
         double delta_x = (linear_velocity * cos(robotState_.heading)) * robotState_.vel_dt;
         double delta_y = (linear_velocity * sin(robotState_.heading)) * robotState_.vel_dt;
