@@ -62,9 +62,11 @@ public:
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
             std::bind(&ControlNode::cmd_vel_callback, this, std::placeholders::_1));
 
-        encoderSubscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(encoderTopic_,
-            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
-            std::bind(&ControlNode::encoder_callback, this, std::placeholders::_1));
+        if (!open_loop_) {
+            encoderSubscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(encoderTopic_,
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
+                std::bind(&ControlNode::encoder_callback, this, std::placeholders::_1));
+        }
 
         odomPublisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odomTopic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
@@ -100,7 +102,7 @@ private:
     RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
-        rclcpp::Time currentTime = this->get_clock()->now();
+        // rclcpp::Time currentTime = this->get_clock()->now();
         robotState_.linearVel_x = msg.linear.x;
         robotState_.linearVel_y = msg.linear.y;
         robotState_.angularVel_z = msg.angular.z;
@@ -143,8 +145,16 @@ private:
         robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
         robotState_.last_vel_time = currentTime.seconds();
 
-        double linear_velocity = (robotState_.left_side_velocity + robotState_.right_side_velocity) / 2.0;
-        double angular_velocity = (robotState_.right_side_velocity - robotState_.left_side_velocity) / wheel_separation_;
+        double linear_velocity = 0;
+        double angular_velocity = 0;
+        if (open_loop_) {
+            linear_velocity = robotState_.linearVel_x;
+            angular_velocity = robotState_.angularVel_z;
+        } else {
+            linear_velocity = (robotState_.left_side_velocity + robotState_.right_side_velocity) / 2.0;
+            angular_velocity = (robotState_.right_side_velocity - robotState_.left_side_velocity) / wheel_separation_;
+        }
+
 
         double delta_heading = angular_velocity * robotState_.vel_dt;
         double delta_x = (linear_velocity * cos(robotState_.heading)) * robotState_.vel_dt;
