@@ -8,6 +8,7 @@ from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
 from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources  import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 import xacro
@@ -21,6 +22,7 @@ def generate_launch_description():
     use_foxglove_bridge = LaunchConfiguration('use_foxglove')
     use_rviz= LaunchConfiguration('use_rviz')
     use_twist_mux= LaunchConfiguration('use_twist_mux')
+    use_robot_localization = LaunchConfiguration('use_robot_localization')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -44,7 +46,16 @@ def generate_launch_description():
             condition=IfCondition(use_foxglove_bridge),
             launch_arguments={'use_sim_time': use_sim_time, 'max_qos_depth': '400'}.items()
     )
+
     
+    robot_localization = Node(
+            condition=IfCondition(use_robot_localization),
+            package='robot_localization',
+            executable='ukf_node',
+            name='ukf_filter_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
+    )
     
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
     rviz = Node(
@@ -98,10 +109,15 @@ def generate_launch_description():
            'use_twist_mux',
            default_value='false',
            description='Use twist_mux if true'),
+        DeclareLaunchArgument(
+            'use_robot_localization',
+            default_value='true',
+            description='Use robot_localization for odom if true'),
 
         node_robot_state_publisher,
         laser_filter,
         foxglove_bridge,
         twist_mux,
+        robot_localization,
         rviz        
     ])
