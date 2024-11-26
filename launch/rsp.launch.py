@@ -133,5 +133,6 @@ def generate_launch_description():
         foxglove_bridge,
         twist_mux,
         robot_localization,
+        control,
         rviz        
     ])
