@@ -2,6 +2,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <limits>
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
@@ -56,7 +57,7 @@ private:
             for (size_t j = filterStartIndex; j < filterEndIndex; j++) {
                 if (j < msg.ranges.size()) {
                     // Set the range reading to a value higher than the max so that they will be discarded as it is assumed the laser did not return back to the lidar.
-                    filteredMsg.ranges[j] = msg.range_max * 2;
+                    filteredMsg.ranges[j] = std::numeric_limits<float>::infinity();
                 }
             }
         }
