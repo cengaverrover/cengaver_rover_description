@@ -46,8 +46,9 @@ public:
         robotState_.left_wheel_names = this->declare_parameter("left_wheel_names", robotState_.left_wheel_names);
         robotState_.right_wheel_names = this->declare_parameter("right_wheel_names", robotState_.right_wheel_names);
 
-        wheel_separation_ = this->declare_parameter("wheel_separation_", 0.788);
-        wheel_radius_ = this->declare_parameter("wheel_radius_", 0.11736);
+        wheel_separation_ = this->declare_parameter("wheel_separation", wheel_separation_);
+        wheel_radius_ = this->declare_parameter("wheel_radius", wheel_radius_);
+        wheel_reduction_ = this->declare_parameter("wheel_reduction", wheel_reduction_);
 
         base_frame_id_ = this->declare_parameter("base_frame_id", base_frame_id_);
         odom_frame_id_ = this->declare_parameter("odom_frame_id", odom_frame_id_);
@@ -55,8 +56,8 @@ public:
         open_loop_ = this->declare_parameter("open_loop", open_loop_);
         cmd_vel_timeout_ = this->declare_parameter("cmd_vel_timeout", cmd_vel_timeout_);
 
-        pose_covariance_diagonal_ = this->declare_parameter("pose_covariance_diagonal_", pose_covariance_diagonal_);
-        twist_covariance_diagonal_ = this->declare_parameter("twist_covariance_diagonal_", twist_covariance_diagonal_);
+        pose_covariance_diagonal_ = this->declare_parameter("pose_covariance_diagonal", pose_covariance_diagonal_);
+        twist_covariance_diagonal_ = this->declare_parameter("twist_covariance_diagonal", twist_covariance_diagonal_);
 
         linear_x_has_velocity_limits_ = this->declare_parameter("linear.x.has_velocity_limits", linear_x_has_velocity_limits_);
         linear_x_max_velocity_ = this->declare_parameter("linear.x.max_velocity", linear_x_max_velocity_);
@@ -93,7 +94,7 @@ public:
 
         odomPublisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odomTopic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
-        
+
         mobilityControlPublisher_ = this->create_publisher<rover_mobility_interfaces::msg::MobilityControl>(mobility_control_topic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
 
@@ -109,7 +110,7 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointStatePublisher_ {};
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher_ {};
     rclcpp::Publisher<rover_mobility_interfaces::msg::MobilityControl>::SharedPtr mobilityControlPublisher_ {};
-    rclcpp::TimerBase::SharedPtr timer_{};
+    rclcpp::TimerBase::SharedPtr timer_ {};
     sensor_msgs::msg::JointState jointStates_ {};
 
     rclcpp::Time lastCmdVelTime {};
@@ -121,6 +122,7 @@ private:
 
     double wheel_separation_ = 1.0;
     double wheel_radius_ = 0.1;
+    double wheel_reduction_ = 100;
     std::string base_frame_id_ { "base_link" };
     std::string odom_frame_id_ { "odom" };
 
@@ -140,28 +142,20 @@ private:
     bool angular_z_has_velocity_limits_ = false;
     double angular_z_max_velocity_ = 1.0;
     double angular_z_min_velocity_ = -1.0;
-    
+
     RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
-        rclcpp::Time currentTime = this->get_clock()->now();
-        if (currentTime.seconds() - lastCmdVelTime.seconds() > cmd_vel_timeout_) {
-            robotState_.linearVel_x = 0;
-            robotState_.linearVel_y = 0;
-            robotState_.angularVel_z = 0;
+        if (linear_x_has_velocity_limits_) {
+            robotState_.linearVel_x = std::clamp(msg.linear.x, linear_x_min_velocity_, linear_x_max_velocity_);
         } else {
-            if (linear_x_has_velocity_limits_) {
-                robotState_.linearVel_x = std::clamp(msg.linear.x, linear_x_min_velocity_, linear_x_max_velocity_);
-            } else {
-                robotState_.linearVel_x = msg.linear.x;
-            }
-            if (angular_z_has_velocity_limits_) {
-                robotState_.angularVel_z = std::clamp(msg.angular.z, angular_z_min_velocity_, angular_z_max_velocity_);
-            } else {
-                robotState_.angularVel_z = msg.angular.z;
-            }
+            robotState_.linearVel_x = msg.linear.x;
         }
-        lastCmdVelTime = currentTime;
+        if (angular_z_has_velocity_limits_) {
+            robotState_.angularVel_z = std::clamp(msg.angular.z, angular_z_min_velocity_, angular_z_max_velocity_);
+        } else {
+            robotState_.angularVel_z = msg.angular.z;
+        }
 
         /*
         robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
@@ -183,10 +177,10 @@ private:
 
         for (size_t i = 0; i < msg.name.size(); i++) {
             if (std::find(robotState_.left_wheel_names.begin(), robotState_.left_wheel_names.end(), msg.name[i]) != robotState_.left_wheel_names.end()) {
-                left_side_velocity_total += msg.velocity[i] * wheel_radius_;
+                left_side_velocity_total += msg.velocity[i] * wheel_radius_ * 2 * M_PI;
 
             } else if (std::find(robotState_.right_wheel_names.begin(), robotState_.right_wheel_names.end(), msg.name[i]) != robotState_.right_wheel_names.end()) {
-                right_side_velocity_total += msg.velocity[i] * wheel_radius_;
+                right_side_velocity_total += msg.velocity[i] * wheel_radius_ * 2 * M_PI;
             } else {
                 throw std::runtime_error("Unknown wheel joint name in encoder data!");
             }
@@ -199,7 +193,13 @@ private:
     void publish_odometry() {
         rclcpp::Time currentTime = this->get_clock()->now();
 
+
         robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
+        if (robotState_.vel_dt > cmd_vel_timeout_) {
+            robotState_.linearVel_x = 0;
+            robotState_.linearVel_y = 0;
+            robotState_.angularVel_z = 0;
+        } 
         robotState_.last_vel_time = currentTime.seconds();
 
         double linear_velocity = 0;
@@ -223,10 +223,10 @@ private:
 
         // https://github.com/linorobot/linorobot/blob/master/src/lino_base.cpp
 
-        tf2::Quaternion odomQuat{};
+        tf2::Quaternion odomQuat {};
         odomQuat.setRPY(0, 0, robotState_.heading);
 
-        nav_msgs::msg::Odometry odomMsg{};
+        nav_msgs::msg::Odometry odomMsg {};
         odomMsg.header.stamp = currentTime;
         odomMsg.header.frame_id = odom_frame_id_;
         odomMsg.child_frame_id = base_frame_id_;
@@ -254,6 +254,13 @@ private:
             }
         }
         odomPublisher_->publish(odomMsg);
+
+        rover_mobility_interfaces::msg::MobilityControl mobilityControlMsg {};
+        mobilityControlMsg.target_rpm[0] = (robotState_.linearVel_x - wheel_separation_ * robotState_.angularVel_z / 2.0) * wheel_reduction_ * 60 / (wheel_radius_ * 2 * M_PI); // left front
+        mobilityControlMsg.target_rpm[2] = mobilityControlMsg.target_rpm[0]; // left back
+        mobilityControlMsg.target_rpm[1] = (robotState_.linearVel_x + wheel_separation_ * robotState_.angularVel_z / 2.0) * wheel_reduction_ * 60 / (wheel_radius_ * 2 * M_PI); // right front
+        mobilityControlMsg.target_rpm[3] = mobilityControlMsg.target_rpm[1]; // right back
+        mobilityControlPublisher_->publish(mobilityControlMsg);
 
         if (open_loop_) {
             jointStates_.header.frame_id = base_frame_id_;
