@@ -54,6 +54,7 @@ public:
         odom_frame_id_ = this->declare_parameter("odom_frame_id", odom_frame_id_);
 
         open_loop_ = this->declare_parameter("open_loop", open_loop_);
+        cmd_vel_timeout_ = this->declare_parameter("cmd_vel_timeout", cmd_vel_timeout_);
 
         pose_covariance_diagonal_ = this->declare_parameter("pose_covariance_diagonal_", pose_covariance_diagonal_);
         twist_covariance_diagonal_ = this->declare_parameter("twist_covariance_diagonal_", twist_covariance_diagonal_);
@@ -83,6 +84,8 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher_ {};
     rclcpp::TimerBase::SharedPtr timer_;
 
+    rclcpp::Time lastCmdVelTime {};
+
     std::string cmdVelTopic_ { "cmd_vel" };
     std::string encoderTopic_ { "encoder_data" };
     std::string odomTopic_ { "odom" };
@@ -95,17 +98,26 @@ private:
     std::vector<double> pose_covariance_diagonal_ { 0.002, 0.002, 0.0, 0.0, 0.0, 0.02 };
     std::vector<double> twist_covariance_diagonal_ { 0.002, 0.0, 0.0, 0.0, 0.0, 0.02 };
 
-    double publish_rate_ = 30.0f;
+    double publish_rate_ = 30.0;
+
+    double cmd_vel_timeout_ = 0.5;
 
     bool open_loop_ = true;
 
     RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
-        // rclcpp::Time currentTime = this->get_clock()->now();
-        robotState_.linearVel_x = msg.linear.x;
-        robotState_.linearVel_y = msg.linear.y;
-        robotState_.angularVel_z = msg.angular.z;
+        rclcpp::Time currentTime = this->get_clock()->now();
+        if (currentTime.seconds() - lastCmdVelTime.seconds() > cmd_vel_timeout_) {
+            robotState_.linearVel_x = 0;
+            robotState_.linearVel_y = 0;
+            robotState_.angularVel_z = 0;
+        } else {
+            robotState_.linearVel_x = msg.linear.x;
+            robotState_.linearVel_y = msg.linear.y;
+            robotState_.angularVel_z = msg.angular.z;
+        }
+        lastCmdVelTime = currentTime;
 
         /*
         robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
