@@ -79,7 +79,7 @@ public:
 
         // Make shared state
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(static_cast<int64_t>(1.0 / publish_rate_)), std::bind(&ControlNode::publish_odometry, this));
+            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / publish_rate_)), std::bind(&ControlNode::publish_odometry, this));
     }
 
 
