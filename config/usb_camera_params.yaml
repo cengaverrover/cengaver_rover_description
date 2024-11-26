@@ -10,7 +10,7 @@
       image_height: 480
       camera_name: "narrow_stereo"
       # reusing same camera intrinsics only for demo, should really be unique for camera2"
-      camera_info_url: "file:///home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/config/camera_info.yaml"
+      camera_info_url: "package://cengaver_rover_description/config/usb_camera_info.yaml"
       brightness: -1
       contrast: -1
       saturation: -1

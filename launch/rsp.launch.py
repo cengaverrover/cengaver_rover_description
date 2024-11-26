@@ -24,6 +24,7 @@ def generate_launch_description():
     use_twist_mux= LaunchConfiguration('use_twist_mux')
     use_robot_localization = LaunchConfiguration('use_robot_localization')
     use_control = LaunchConfiguration('use_control')
+    use_usb_cam = LaunchConfiguration('use_usb_cam')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -67,6 +68,15 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'custom_controller.yaml')],
     )
     
+    usb_cam = Node(
+            condition=IfCondition(use_usb_cam),
+            package='usb_cam',
+            executable='usb_cam_node_exe',
+            name='usb_cam_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'usb_camera_params.yaml')],
+    )
+    
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
     rviz = Node(
         condition=IfCondition(use_rviz),
@@ -96,6 +106,8 @@ def generate_launch_description():
         arguments=['--params-file', os.path.join(
                     pkg_path, 'config', 'twist_mux.yaml')] 
     )
+    
+    
 
     # Launch!
     return LaunchDescription([
@@ -127,6 +139,10 @@ def generate_launch_description():
             'use_control',
             default_value='false',
             description='Use control_node for driving real robot if true'),
+         DeclareLaunchArgument(
+            'use_usb_cam',
+            default_value='false',
+            description='Use usb_cam to for camera if true'),
 
         node_robot_state_publisher,
         laser_filter,
@@ -134,5 +150,6 @@ def generate_launch_description():
         twist_mux,
         robot_localization,
         control,
+        usb_cam,
         rviz        
     ])
