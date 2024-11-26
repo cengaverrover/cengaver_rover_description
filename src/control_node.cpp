@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <mutex>
+#include <algorithm>
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -17,12 +18,11 @@
 
 #define TOTAL_TIME(sec, nsec) (sec + nsec)
 
-struct RobotState
-{
-    std::vector<std::string> left_wheel_names;
-    std::vector<std::string> right_wheel_names;
-    double left_wheel_velocity = 0.0;
-    double right_wheel_velocity = 0.0;
+struct RobotState {
+    std::vector<std::string> left_wheel_names {};
+    std::vector<std::string> right_wheel_names {};
+    double left_side_velocity {};
+    double right_side_velocity {};
     double linearVel_x = 0.0;
     double linearVel_y = 0.0;
     double angularVel_z = 0.0;
@@ -40,21 +40,23 @@ public:
     ControlNode()
         : Node("control_node") {
 
-        this->declare_parameter("cmd_vel_topic", cmdVelTopic_);
-        this->declare_parameter("output_topic", encoderTopic_);
-        this->declare_parameter("odom_topic", odomTopic_);
-        this->declare_parameter("wheel_separation", 0.788);
-        this->declare_parameter("wheel_radius", 0.11736);
-        this->declare_parameter("left_wheel_names", std::vector<std::string>{"front_left_wheel_joint", "back_left_wheel_joint"});
-        this->declare_parameter("right_wheel_names", std::vector<std::string>{"front_right_wheel_joint", "back_right_wheel_joint"});
+        cmdVelTopic_ = this->declare_parameter("cmd_vel_topic", cmdVelTopic_);
+        encoderTopic_ = this->declare_parameter("output_topic", encoderTopic_);
+        odomTopic_ = this->declare_parameter("odom_topic", odomTopic_);
 
-        this->get_parameter("wheel_separation", wheel_separation);
-        this->get_parameter("wheel_radius", wheel_radius);
-        this->get_parameter("cmd_vel_topic", cmdVelTopic_);
-        this->get_parameter("output_topic", encoderTopic_);
-        this->get_parameter("odom_topic", odomTopic_);
-        this->get_parameter("left_wheel_names", robotState.left_wheel_names);
-        this->get_parameter("right_wheel_names", robotState.right_wheel_names);
+        robotState_.left_wheel_names = this->declare_parameter("left_wheel_names", robotState_.left_wheel_names);
+        robotState_.right_wheel_names = this->declare_parameter("right_wheel_names", robotState_.right_wheel_names);
+
+        wheel_separation_ = this->declare_parameter("wheel_separation_", 0.788);
+        wheel_radius_ = this->declare_parameter("wheel_radius_", 0.11736);
+
+        base_frame_id_ = this->declare_parameter("base_frame_id", base_frame_id_);
+        odom_frame_id_ = this->declare_parameter("odom_frame_id", odom_frame_id_);
+
+        open_loop_ = this->declare_parameter("open_loop", open_loop_);
+
+        pose_covariance_diagonal_ = this->declare_parameter("pose_covariance_diagonal_", pose_covariance_diagonal_);
+        twist_covariance_diagonal_ = this->declare_parameter("twist_covariance_diagonal_", twist_covariance_diagonal_);
 
         cmdVelSubscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(cmdVelTopic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
@@ -69,10 +71,9 @@ public:
 
         // Make shared state
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(100), std::bind(&ControlNode::publish_odometry, this));
+            std::chrono::milliseconds(static_cast<int64_t>(1.0 / publish_rate_)), std::bind(&ControlNode::publish_odometry, this));
     }
 
-    RobotState robotState;
 
 private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdVelSubscriber_ {};
@@ -84,127 +85,114 @@ private:
     std::string encoderTopic_ { "encoder_data" };
     std::string odomTopic_ { "odom" };
 
-    double wheel_separation;
-    double wheel_radius;
+    double wheel_separation_ = 1.0;
+    double wheel_radius_ = 0.1;
+    std::string base_frame_id_ { "base_link" };
+    std::string odom_frame_id_ { "odom" };
 
+    std::vector<double> pose_covariance_diagonal_ { 0.002, 0.002, 0.0, 0.0, 0.0, 0.02 };
+    std::vector<double> twist_covariance_diagonal_ { 0.002, 0.0, 0.0, 0.0, 0.0, 0.02 };
+
+    double publish_rate_ = 30.0f;
+
+    bool open_loop_ = true;
+
+    RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
         rclcpp::Time currentTime = this->get_clock()->now();
-        {
-            std::lock_guard<std::mutex> lock(robotState.stateMutex);
-            robotState.linearVel_x = msg.linear.x;
-            robotState.linearVel_y = msg.linear.y;
-            robotState.angularVel_z = msg.angular.z;
+        robotState_.linearVel_x = msg.linear.x;
+        robotState_.linearVel_y = msg.linear.y;
+        robotState_.angularVel_z = msg.angular.z;
 
-            /*
-            robotState.vel_dt = (currentTime.seconds() - robotState.last_vel_time);
-            robotState.last_vel_time = currentTime.seconds();
+        /*
+        robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
+        robotState_.last_vel_time = currentTime.seconds();
 
-            double delta_heading = robotState.angularVel_z * robotState.vel_dt;
-            double delta_x = (robotState.linearVel_x * cos(robotState.heading) - robotState.linearVel_y * sin(robotState.heading)) * robotState.vel_dt;
-            double delta_y = (robotState.linearVel_x * sin(robotState.heading) + robotState.linearVel_y * cos(robotState.heading)) * robotState.vel_dt;
+        double delta_heading = robotState_.angularVel_z * robotState_.vel_dt;
+        double delta_x = (robotState_.linearVel_x * cos(robotState_.heading) - robotState_.linearVel_y * sin(robotState_.heading)) * robotState_.vel_dt;
+        double delta_y = (robotState_.linearVel_x * sin(robotState_.heading) + robotState_.linearVel_y * cos(robotState_.heading)) * robotState_.vel_dt;
 
-            robotState.x_pos += delta_x;
-            robotState.y_pos += delta_y;
-            robotState.heading += delta_heading;
-            */
-        }
+        robotState_.x_pos += delta_x;
+        robotState_.y_pos += delta_y;
+        robotState_.heading += delta_heading;
+        */
     }
 
     void encoder_callback(const sensor_msgs::msg::JointState& msg) {
-        double left_wheel_velocity = 0.0;
-        double right_wheel_velocity = 0.0;
+        double left_side_velocity_total = 0.0;
+        double right_side_velocity_total = 0.0;
 
-        for (size_t i = 0; i < msg.name.size(); ++i) {
-            if (msg.name[i] == "front_left_wheel_joint" || msg.name[i] == "back_left_wheel_joint") {
-                left_wheel_velocity += msg.velocity[i];
-            } else if (msg.name[i] == "front_right_wheel_joint" || msg.name[i] == "back_right_wheel_joint") {
-                right_wheel_velocity += msg.velocity[i];
+        for (size_t i = 0; i < msg.name.size(); i++) {
+            if (std::find(robotState_.left_wheel_names.begin(), robotState_.left_wheel_names.end(), msg.name[i]) != robotState_.left_wheel_names.end()) {
+                left_side_velocity_total += msg.velocity[i] * wheel_radius_;
+
+            } else if (std::find(robotState_.right_wheel_names.begin(), robotState_.right_wheel_names.end(), msg.name[i]) != robotState_.right_wheel_names.end()) {
+                right_side_velocity_total += msg.velocity[i] * wheel_radius_;
             } else {
                 throw std::runtime_error("Unknown wheel joint name in encoder data!");
             }
         }
-
-        left_wheel_velocity /= 2.0;
-        right_wheel_velocity /= 2.0;
-
-        std::lock_guard<std::mutex> lock(robotState.stateMutex);
-        robotState.left_wheel_velocity = left_wheel_velocity;
-        robotState.right_wheel_velocity = right_wheel_velocity;
+        robotState_.left_side_velocity = left_side_velocity_total / msg.velocity.size();
+        robotState_.right_side_velocity = right_side_velocity_total / msg.velocity.size();
     }
 
-  void publish_odometry() {
+    void publish_odometry() {
         rclcpp::Time currentTime = this->get_clock()->now();
-        {
-            std::lock_guard<std::mutex> lock(robotState.stateMutex);
-            robotState.vel_dt = (currentTime.seconds() - robotState.last_vel_time);
-            robotState.last_vel_time = currentTime.seconds();
 
-            double linear_velocity = (robotState.left_wheel_velocity + robotState.right_wheel_velocity) * wheel_radius / 2.0;
-            double angular_velocity = (robotState.right_wheel_velocity - robotState.left_wheel_velocity) * wheel_radius / wheel_separation;
+        robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
+        robotState_.last_vel_time = currentTime.seconds();
 
-            double delta_heading = angular_velocity * robotState.vel_dt;
-            double delta_x = (linear_velocity * cos(robotState.heading)) * robotState.vel_dt;
-            double delta_y = (linear_velocity * sin(robotState.heading)) * robotState.vel_dt;
+        double linear_velocity = (robotState_.left_side_velocity + robotState_.right_side_velocity) / 2.0;
+        double angular_velocity = (robotState_.right_side_velocity - robotState_.left_side_velocity) / wheel_separation_;
 
-            robotState.x_pos += delta_x;
-            robotState.y_pos += delta_y;
-            robotState.heading += delta_heading;
+        double delta_heading = angular_velocity * robotState_.vel_dt;
+        double delta_x = (linear_velocity * cos(robotState_.heading)) * robotState_.vel_dt;
+        double delta_y = (linear_velocity * sin(robotState_.heading)) * robotState_.vel_dt;
 
-            tf2::Quaternion odomQuat;
-            odomQuat.setRPY(0, 0, robotState.heading);
-
-            // https://github.com/linorobot/linorobot/blob/master/src/lino_base.cpp
-            /*
-            geometry_msgs::msg::TransformStamped odomTrans;
-            odomTrans.header.stamp = currentTime;
-            odomTrans.header.frame_id = "odom";
-            odomTrans.child_frame_id = "base_footprint";
+        robotState_.x_pos += delta_x;
+        robotState_.y_pos += delta_y;
+        robotState_.heading += delta_heading;
 
 
-            odomTrans.transform.translation.x = robotState.x_pos;
-            odomTrans.transform.translation.y = robotState.y_pos;
-            odomTrans.transform.translation.z = 0.0;
-            odomTrans.transform.rotation.x = odomQuat.x();
-            odomTrans.transform.rotation.y = odomQuat.y();
-            odomTrans.transform.rotation.z = odomQuat.z();
-            odomTrans.transform.rotation.w = odomQuat.w();
+        // https://github.com/linorobot/linorobot/blob/master/src/lino_base.cpp
 
-            odom_broadcaster_.sendTransform(odomTrans);
-            */
+        tf2::Quaternion odomQuat{};
+        odomQuat.setRPY(0, 0, robotState_.heading);
 
-            nav_msgs::msg::Odometry odomMsg;
-            odomMsg.header.stamp = currentTime;
-            odomMsg.header.frame_id = "odom";
-            odomMsg.child_frame_id = "base_footprint";
+        nav_msgs::msg::Odometry odomMsg{};
+        odomMsg.header.stamp = currentTime;
+        odomMsg.header.frame_id = odom_frame_id_;
+        odomMsg.child_frame_id = base_frame_id_;
 
-            odomMsg.pose.pose.position.x = robotState.x_pos;
-            odomMsg.pose.pose.position.y = robotState.y_pos;
-            odomMsg.pose.pose.position.z = 0.0;
-            odomMsg.pose.pose.orientation.x = odomQuat.x();
-            odomMsg.pose.pose.orientation.y = odomQuat.y();
-            odomMsg.pose.pose.orientation.z = odomQuat.z();
-            odomMsg.pose.pose.orientation.w = odomQuat.w();
-            odomMsg.pose.covariance[0] = 0.001;
-            odomMsg.pose.covariance[7] = 0.001;
-            odomMsg.pose.covariance[35] = 0.001;
+        odomMsg.pose.pose.position.x = robotState_.x_pos;
+        odomMsg.pose.pose.position.y = robotState_.y_pos;
+        odomMsg.pose.pose.position.z = 0.0;
+        odomMsg.pose.pose.orientation.x = odomQuat.x();
+        odomMsg.pose.pose.orientation.y = odomQuat.y();
+        odomMsg.pose.pose.orientation.z = odomQuat.z();
+        odomMsg.pose.pose.orientation.w = odomQuat.w();
 
-            odomMsg.twist.twist.linear.x = linear_velocity;
-            odomMsg.twist.twist.linear.y = 0.0;
-            odomMsg.twist.twist.linear.z = 0.0;
-            odomMsg.twist.twist.angular.x = 0.0;
-            odomMsg.twist.twist.angular.y = 0.0;
-            odomMsg.twist.twist.angular.z = angular_velocity;
-            odomMsg.twist.covariance[0] = 0.0001;
-            odomMsg.twist.covariance[7] = 0.0001;
-            odomMsg.twist.covariance[35] = 0.0001;
 
-            odomPublisher_->publish(odomMsg);
+        odomMsg.twist.twist.linear.x = linear_velocity;
+        odomMsg.twist.twist.linear.y = 0.0;
+        odomMsg.twist.twist.linear.z = 0.0;
+        odomMsg.twist.twist.angular.x = 0.0;
+        odomMsg.twist.twist.angular.y = 0.0;
+        odomMsg.twist.twist.angular.z = angular_velocity;
+
+        for (size_t i = 0; i < pose_covariance_diagonal_.size(); i++) {
+            if (i * 7 < odomMsg.pose.covariance.size()) {
+                odomMsg.pose.covariance[i * 7] = pose_covariance_diagonal_[i];
+                odomMsg.twist.covariance[i * 7] = twist_covariance_diagonal_[i];
+            }
         }
+
+        odomPublisher_->publish(odomMsg);
     }
 };
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<ControlNode>());
     rclcpp::shutdown();
