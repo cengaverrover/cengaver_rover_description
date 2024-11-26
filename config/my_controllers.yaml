@@ -29,11 +29,11 @@ diff_cont:
     # right_wheel_radius_multiplier: x
 
     # odom_frame_id: x
-    pose_covariance_diagonal: [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
-    twist_covariance_diagonal: [0.001, 0.0, 0.0, 0.0, 0.0, 0.01]
+    pose_covariance_diagonal: [0.002, 0.002, 0.0, 0.0, 0.0, 0.02]
+    twist_covariance_diagonal: [0.002, 0.0, 0.0, 0.0, 0.0, 0.02]
 
     open_loop: false
-    enable_odom_tf: true
+    enable_odom_tf: false
 
     cmd_vel_timeout: 0.5
     # publish_limited_velocity: x
