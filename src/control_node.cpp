@@ -14,6 +14,7 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "rover_mobility_interfaces/msg/mobility_control.hpp"
 
 struct RobotState {
     std::vector<std::string> left_wheel_names {};
@@ -38,7 +39,8 @@ public:
         : Node("control_node") {
 
         cmdVelTopic_ = this->declare_parameter("cmd_vel_topic", cmdVelTopic_);
-        encoderTopic_ = this->declare_parameter("output_topic", encoderTopic_);
+        mobility_control_topic_ = this->declare_parameter("mobility_control_topic", mobility_control_topic_);
+        jointStatesTopic_ = this->declare_parameter("joint_states_topic", jointStatesTopic_);
         odomTopic_ = this->declare_parameter("odom_topic", odomTopic_);
 
         robotState_.left_wheel_names = this->declare_parameter("left_wheel_names", robotState_.left_wheel_names);
@@ -69,12 +71,30 @@ public:
             std::bind(&ControlNode::cmd_vel_callback, this, std::placeholders::_1));
 
         if (!open_loop_) {
-            encoderSubscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(encoderTopic_,
+            jointStateSubscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(jointStatesTopic_,
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
                 std::bind(&ControlNode::encoder_callback, this, std::placeholders::_1));
+        } else {
+            jointStatePublisher_ = this->create_publisher<sensor_msgs::msg::JointState>(jointStatesTopic_,
+                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+            size_t jointCount = robotState_.left_wheel_names.size() + robotState_.right_wheel_names.size();
+            jointStates_.name.reserve(jointCount);
+            jointStates_.position.reserve(jointCount);
+            jointStates_.velocity.reserve(jointCount);
+
+            jointStates_.name.resize(jointCount);
+            jointStates_.position.resize(jointCount);
+            jointStates_.velocity.resize(jointCount);
+            for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
+                jointStates_.name[i * 2] = robotState_.left_wheel_names[i];
+                jointStates_.name[i * 2 + 1] = robotState_.right_wheel_names[i];
+            }
         }
 
         odomPublisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odomTopic_,
+            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+        
+        mobilityControlPublisher_ = this->create_publisher<rover_mobility_interfaces::msg::MobilityControl>(mobility_control_topic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
 
         // Make shared state
@@ -85,15 +105,19 @@ public:
 
 private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdVelSubscriber_ {};
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr encoderSubscriber_ {};
+    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr jointStateSubscriber_ {};
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointStatePublisher_ {};
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher_ {};
-    rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Publisher<rover_mobility_interfaces::msg::MobilityControl>::SharedPtr mobilityControlPublisher_ {};
+    rclcpp::TimerBase::SharedPtr timer_{};
+    sensor_msgs::msg::JointState jointStates_ {};
 
     rclcpp::Time lastCmdVelTime {};
 
     std::string cmdVelTopic_ { "cmd_vel" };
-    std::string encoderTopic_ { "encoder_data" };
+    std::string mobility_control_topic_ { "motor_control" };
     std::string odomTopic_ { "odom" };
+    std::string jointStatesTopic_ { "joint_states" };
 
     double wheel_separation_ = 1.0;
     double wheel_radius_ = 0.1;
@@ -169,6 +193,7 @@ private:
         }
         robotState_.left_side_velocity = left_side_velocity_total / msg.velocity.size();
         robotState_.right_side_velocity = right_side_velocity_total / msg.velocity.size();
+
     }
 
     void publish_odometry() {
@@ -228,8 +253,21 @@ private:
                 odomMsg.twist.covariance[i * 7] = twist_covariance_diagonal_[i];
             }
         }
-
         odomPublisher_->publish(odomMsg);
+
+        if (open_loop_) {
+            jointStates_.header.frame_id = base_frame_id_;
+            jointStates_.header.stamp = currentTime;
+            for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
+                jointStates_.velocity[i * 2] = robotState_.left_side_velocity / wheel_separation_;
+                jointStates_.velocity[i * 2 + 1] = robotState_.right_side_velocity / wheel_separation_;
+
+                jointStates_.position[i * 2] += jointStates_.velocity[i] * robotState_.vel_dt;
+                jointStates_.position[i * 2 + 1] += jointStates_.velocity[i + 1] * robotState_.vel_dt;
+            }
+            jointStatePublisher_->publish(jointStates_);
+        }
+
     }
 };
 

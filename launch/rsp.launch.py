@@ -23,6 +23,7 @@ def generate_launch_description():
     use_rviz= LaunchConfiguration('use_rviz')
     use_twist_mux= LaunchConfiguration('use_twist_mux')
     use_robot_localization = LaunchConfiguration('use_robot_localization')
+    use_control = LaunchConfiguration('use_control')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -55,6 +56,15 @@ def generate_launch_description():
             name='ukf_filter_node',
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
+    )
+    
+    control = Node(
+            condition=IfCondition(use_control),
+            package='cengaver_rover_description',
+            executable='control_node',
+            name='control_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'custom_controller.yaml')],
     )
     
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
@@ -112,7 +122,11 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'use_robot_localization',
             default_value='true',
-            description='Use robot_localization for odom if true'),
+            description='Use robot_localization for odom if true'),        
+        DeclareLaunchArgument(
+            'use_control',
+            default_value='false',
+            description='Use control_node for driving real robot if true'),
 
         node_robot_state_publisher,
         laser_filter,

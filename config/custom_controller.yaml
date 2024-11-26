@@ -4,7 +4,9 @@ control_node:
 
     cmd_vel_topic: "cmd_vel"
     encoder_topic: "encoder_data"
-    odom_topic: "/wheel/odom"
+    odom_topic: "wheel/odom"
+    joint_states_topic: "joint_states"
+    mobility_control_topic: "motor_control"
 
     wheel_separation: 0.788
     wheel_radius: 0.11736
