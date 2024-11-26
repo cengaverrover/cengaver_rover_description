@@ -64,7 +64,7 @@
         <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
             <ros>
                 <remapping>~/cmd_vel_unstamped:=cmd_vel</remapping>
-                <remapping>~/odom:=/encoder/odom</remapping>
+                <remapping>~/odom:=/wheel/odom</remapping>
             </ros>
             <parameters>$(find cengaver_rover_description)/config/my_controllers.yaml</parameters>
         </plugin>
