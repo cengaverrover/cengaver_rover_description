@@ -15,9 +15,6 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 
-
-#define TOTAL_TIME(sec, nsec) (sec + nsec)
-
 struct RobotState {
     std::vector<std::string> left_wheel_names {};
     std::vector<std::string> right_wheel_names {};
@@ -58,6 +55,14 @@ public:
 
         pose_covariance_diagonal_ = this->declare_parameter("pose_covariance_diagonal_", pose_covariance_diagonal_);
         twist_covariance_diagonal_ = this->declare_parameter("twist_covariance_diagonal_", twist_covariance_diagonal_);
+
+        linear_x_has_velocity_limits_ = this->declare_parameter("linear.x.has_velocity_limits", linear_x_has_velocity_limits_);
+        linear_x_max_velocity_ = this->declare_parameter("linear.x.max_velocity", linear_x_max_velocity_);
+        linear_x_min_velocity_ = this->declare_parameter("linear.x.min_velocity", linear_x_min_velocity_);
+
+        angular_z_has_velocity_limits_ = this->declare_parameter("angular.z.has_velocity_limits", angular_z_has_velocity_limits_);
+        angular_z_max_velocity_ = this->declare_parameter("angular.z.max_velocity", angular_z_max_velocity_);
+        angular_z_min_velocity_ = this->declare_parameter("angular.z.min_velocity", angular_z_min_velocity_);
 
         cmdVelSubscriber_ = this->create_subscription<geometry_msgs::msg::Twist>(cmdVelTopic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
@@ -104,6 +109,14 @@ private:
 
     bool open_loop_ = true;
 
+    bool linear_x_has_velocity_limits_ = false;
+    double linear_x_max_velocity_ = 1.0;
+    double linear_x_min_velocity_ = -1.0;
+
+    bool angular_z_has_velocity_limits_ = false;
+    double angular_z_max_velocity_ = 1.0;
+    double angular_z_min_velocity_ = -1.0;
+    
     RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
@@ -113,9 +126,16 @@ private:
             robotState_.linearVel_y = 0;
             robotState_.angularVel_z = 0;
         } else {
-            robotState_.linearVel_x = msg.linear.x;
-            robotState_.linearVel_y = msg.linear.y;
-            robotState_.angularVel_z = msg.angular.z;
+            if (linear_x_has_velocity_limits_) {
+                robotState_.linearVel_x = std::clamp(msg.linear.x, linear_x_min_velocity_, linear_x_max_velocity_);
+            } else {
+                robotState_.linearVel_x = msg.linear.x;
+            }
+            if (angular_z_has_velocity_limits_) {
+                robotState_.angularVel_z = std::clamp(msg.angular.z, angular_z_min_velocity_, angular_z_max_velocity_);
+            } else {
+                robotState_.angularVel_z = msg.angular.z;
+            }
         }
         lastCmdVelTime = currentTime;
 
