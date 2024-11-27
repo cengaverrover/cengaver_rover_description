@@ -148,6 +148,7 @@ private:
     RobotState robotState_ {};
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
+        lastCmdVelTime = this->get_clock()->now();
         if (linear_x_has_velocity_limits_) {
             robotState_.linearVel_x = std::clamp(msg.linear.x, linear_x_min_velocity_, linear_x_max_velocity_);
         } else {
@@ -188,11 +189,9 @@ private:
 
 
         robotState_.vel_dt = (currentTime.seconds() - robotState_.last_vel_time);
-        if (robotState_.vel_dt > cmd_vel_timeout_) {
+        if (currentTime.seconds() - lastCmdVelTime.seconds() > cmd_vel_timeout_) {
             robotState_.linearVel_x = 0;
             robotState_.linearVel_y = 0;
-            robotState_.left_side_velocity = (robotState_.linearVel_x - wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
-            robotState_.right_side_velocity = (robotState_.linearVel_x + wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
             robotState_.angularVel_z = 0;
         }
         robotState_.last_vel_time = currentTime.seconds();
@@ -202,6 +201,8 @@ private:
         if (open_loop_) {
             linear_velocity = robotState_.linearVel_x;
             angular_velocity = robotState_.angularVel_z;
+            robotState_.left_side_velocity = (robotState_.linearVel_x - wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
+            robotState_.right_side_velocity = (robotState_.linearVel_x + wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
         } else {
             linear_velocity = (robotState_.left_side_velocity + robotState_.right_side_velocity) / 2.0;
             angular_velocity = (robotState_.right_side_velocity - robotState_.left_side_velocity) / wheel_separation_;
