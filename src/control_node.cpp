@@ -15,6 +15,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "rover_mobility_interfaces/msg/mobility_control.hpp"
+#include "rover_mobility_interfaces/msg/mobility_feedback.hpp"
 
 struct RobotState {
     std::vector<std::string> left_wheel_names {};
@@ -72,24 +73,23 @@ public:
             std::bind(&ControlNode::cmd_vel_callback, this, std::placeholders::_1));
 
         if (!open_loop_) {
-            jointStateSubscriber_ = this->create_subscription<sensor_msgs::msg::JointState>(jointStatesTopic_,
+            mobilityFeedbackSubscriber_ = this->create_subscription<rover_mobility_interfaces::msg::MobilityFeedback>(mobilityFeedbackTopic_,
                 rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data)),
                 std::bind(&ControlNode::encoder_callback, this, std::placeholders::_1));
-        } else {
-            jointStatePublisher_ = this->create_publisher<sensor_msgs::msg::JointState>(jointStatesTopic_,
-                rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
-            size_t jointCount = robotState_.left_wheel_names.size() + robotState_.right_wheel_names.size();
-            jointStates_.name.reserve(jointCount);
-            jointStates_.position.reserve(jointCount);
-            jointStates_.velocity.reserve(jointCount);
+        }
 
-            jointStates_.name.resize(jointCount);
-            jointStates_.position.resize(jointCount);
-            jointStates_.velocity.resize(jointCount);
-            for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
-                jointStates_.name[i * 2] = robotState_.left_wheel_names[i];
-                jointStates_.name[i * 2 + 1] = robotState_.right_wheel_names[i];
-            }
+        jointStatePublisher_ = this->create_publisher<sensor_msgs::msg::JointState>(jointStatesTopic_,
+            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+        size_t jointCount = robotState_.left_wheel_names.size() + robotState_.right_wheel_names.size();
+        jointStates_.name.reserve(jointCount);
+        jointStates_.position.reserve(jointCount);
+        jointStates_.velocity.reserve(jointCount);
+        jointStates_.name.resize(jointCount);
+        jointStates_.position.resize(jointCount);
+        jointStates_.velocity.resize(jointCount);
+        for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
+            jointStates_.name[i * 2] = robotState_.left_wheel_names[i];
+            jointStates_.name[i * 2 + 1] = robotState_.right_wheel_names[i];
         }
 
         odomPublisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odomTopic_,
@@ -106,12 +106,13 @@ public:
 
 private:
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmdVelSubscriber_ {};
-    rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr jointStateSubscriber_ {};
+    rclcpp::Subscription<rover_mobility_interfaces::msg::MobilityFeedback>::SharedPtr mobilityFeedbackSubscriber_ {};
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr jointStatePublisher_ {};
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odomPublisher_ {};
     rclcpp::Publisher<rover_mobility_interfaces::msg::MobilityControl>::SharedPtr mobilityControlPublisher_ {};
     rclcpp::TimerBase::SharedPtr timer_ {};
     sensor_msgs::msg::JointState jointStates_ {};
+    rover_mobility_interfaces::msg::MobilityFeedback mobilityFeedbackMsg_ {};
 
     rclcpp::Time lastCmdVelTime {};
 
@@ -119,6 +120,7 @@ private:
     std::string mobility_control_topic_ { "motor_control" };
     std::string odomTopic_ { "odom" };
     std::string jointStatesTopic_ { "joint_states" };
+    std::string mobilityFeedbackTopic_ { "mobility_feedback" };
 
     double wheel_separation_ = 1.0;
     double wheel_radius_ = 0.1;
@@ -171,22 +173,13 @@ private:
         */
     }
 
-    void encoder_callback(const sensor_msgs::msg::JointState& msg) {
-        double left_side_velocity_total = 0.0;
-        double right_side_velocity_total = 0.0;
+    void encoder_callback(const rover_mobility_interfaces::msg::MobilityFeedback& msg) {
 
-        for (size_t i = 0; i < msg.name.size(); i++) {
-            if (std::find(robotState_.left_wheel_names.begin(), robotState_.left_wheel_names.end(), msg.name[i]) != robotState_.left_wheel_names.end()) {
-                left_side_velocity_total += msg.velocity[i] * wheel_radius_ * 2 * M_PI;
+        double left_side_velocity_total = static_cast<double>(msg.motor_feedbacks[0].rpm + msg.motor_feedbacks[2].rpm) * wheel_radius_ * 2 * M_PI / 60.0;
+        double right_side_velocity_total = static_cast<double>(msg.motor_feedbacks[1].rpm + msg.motor_feedbacks[3].rpm) * wheel_radius_ * 2 * M_PI / 60.0;
 
-            } else if (std::find(robotState_.right_wheel_names.begin(), robotState_.right_wheel_names.end(), msg.name[i]) != robotState_.right_wheel_names.end()) {
-                right_side_velocity_total += msg.velocity[i] * wheel_radius_ * 2 * M_PI;
-            } else {
-                throw std::runtime_error("Unknown wheel joint name in encoder data!");
-            }
-        }
-        robotState_.left_side_velocity = left_side_velocity_total / msg.velocity.size();
-        robotState_.right_side_velocity = right_side_velocity_total / msg.velocity.size();
+        robotState_.left_side_velocity = left_side_velocity_total / 2.0;
+        robotState_.right_side_velocity = right_side_velocity_total / 2.0;
 
     }
 
@@ -198,8 +191,10 @@ private:
         if (robotState_.vel_dt > cmd_vel_timeout_) {
             robotState_.linearVel_x = 0;
             robotState_.linearVel_y = 0;
+            robotState_.left_side_velocity = (robotState_.linearVel_x - wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
+            robotState_.right_side_velocity = (robotState_.linearVel_x + wheel_separation_ * robotState_.angularVel_z / 2.0) / (wheel_radius_ * 2 * M_PI);
             robotState_.angularVel_z = 0;
-        } 
+        }
         robotState_.last_vel_time = currentTime.seconds();
 
         double linear_velocity = 0;
@@ -262,18 +257,16 @@ private:
         mobilityControlMsg.target_rpm[3] = mobilityControlMsg.target_rpm[1]; // right back
         mobilityControlPublisher_->publish(mobilityControlMsg);
 
-        if (open_loop_) {
-            jointStates_.header.frame_id = base_frame_id_;
-            jointStates_.header.stamp = currentTime;
-            for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
-                jointStates_.velocity[i * 2] = robotState_.left_side_velocity / wheel_separation_;
-                jointStates_.velocity[i * 2 + 1] = robotState_.right_side_velocity / wheel_separation_;
+        jointStates_.header.frame_id = base_frame_id_;
+        jointStates_.header.stamp = currentTime;
+        for (size_t i = 0; i < robotState_.left_wheel_names.size(); i++) {
+            jointStates_.velocity[i * 2] = robotState_.left_side_velocity / wheel_separation_;
+            jointStates_.velocity[i * 2 + 1] = robotState_.right_side_velocity / wheel_separation_;
 
-                jointStates_.position[i * 2] += jointStates_.velocity[i] * robotState_.vel_dt;
-                jointStates_.position[i * 2 + 1] += jointStates_.velocity[i + 1] * robotState_.vel_dt;
-            }
-            jointStatePublisher_->publish(jointStates_);
+            jointStates_.position[i * 2] += jointStates_.velocity[i] * robotState_.vel_dt;
+            jointStates_.position[i * 2 + 1] += jointStates_.velocity[i + 1] * robotState_.vel_dt;
         }
+        jointStatePublisher_->publish(jointStates_);
 
     }
 };
