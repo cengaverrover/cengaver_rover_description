@@ -121,7 +121,7 @@ def generate_launch_description():
             description='Use ros2_control if true'),
         DeclareLaunchArgument(
            'use_foxglove',
-           default_value='false',
+           default_value='true',
            description='Use foxglove_bridge if true'),
         DeclareLaunchArgument(
            'use_rviz',
