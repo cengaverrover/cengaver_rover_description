@@ -31,7 +31,7 @@ def generate_launch_description():
     xacro_file = os.path.join(pkg_path,'models','cengaver.urdf.xacro')
     # robot_description_config = xacro.process_file(xacro_file).toxml()
     robot_description_config = Command(['xacro ', xacro_file, ' use_ros2_control:=', use_ros2_control, ' sim_mode:=', use_sim_time])
-    
+
     # Create a robot_state_publisher node
     params = {'robot_description': robot_description_config, 'use_sim_time': use_sim_time}
     node_robot_state_publisher = Node(
@@ -58,25 +58,7 @@ def generate_launch_description():
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
     )
-    
-    control = Node(
-            condition=IfCondition(use_control),
-            package='cengaver_rover_description',
-            executable='control_node',
-            name='control_node',
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'custom_controller.yaml')],
-    )
-    
-    usb_cam = Node(
-            condition=IfCondition(use_usb_cam),
-            package='usb_cam',
-            executable='usb_cam_node_exe',
-            name='usb_cam_node',
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'usb_camera_params.yaml')],
-    )
-    
+
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
     rviz = Node(
         condition=IfCondition(use_rviz),
@@ -87,7 +69,7 @@ def generate_launch_description():
         parameters=[{'use_sim_time': use_sim_time}],
         arguments=['-d', rviz_config_path]
     )
-    
+
     laser_filter_params = {'input_topic': 'scan_raw', 'output_topic': 'scan', 'filtered_ranges': [-0.611, 0.611], 'use_sim_time': use_sim_time}
     laser_filter = Node(
         package='cengaver_rover_description',
@@ -152,4 +134,5 @@ def generate_launch_description():
         control,
         usb_cam,
         rviz        
+
     ])
