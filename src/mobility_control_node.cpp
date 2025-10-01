@@ -370,16 +370,12 @@ private:
     }
 
     // Send a MobilityCommandPacket over USB with logging
-    void send_usb_command_packet(const MobilityCommandPacket& packet) {
+    bool send_usb_command_packet(const MobilityCommandPacket& packet) {
         int ret = protocol_->write_bytes((void*) &packet, sizeof(packet));
         if (ret == sizeof(packet)) {
-            RCLCPP_INFO(this->get_logger(),
-                "Sent command_id: %d values: [%.3f, %.3f, %.3f, %.3f]",
-                packet.command_id, packet.value1, packet.value2, packet.value3, packet.value4);
+            return true;
         } else {
-            RCLCPP_ERROR(this->get_logger(),
-                "Failed to send command_id: %d (ret=%d)",
-                packet.command_id, ret);
+            return false;
         }
     }
 
@@ -391,7 +387,9 @@ private:
         pkt.value2 = target_velocities[1];
         pkt.value3 = target_velocities[2];
         pkt.value4 = target_velocities[3];
-        send_usb_command_packet(pkt);
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to send target velocities to device");
+        }
     }
 
     // Send PWM duty cycles
@@ -402,7 +400,9 @@ private:
         pkt.value2 = duties[1];
         pkt.value3 = duties[2];
         pkt.value4 = duties[3];
-        send_usb_command_packet(pkt);
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to send PWM dutycycles to device");
+        }
     }
 
     // Send maximum PWM duty
@@ -410,8 +410,11 @@ private:
         MobilityCommandPacket pkt {};
         pkt.command_id = MobilityCommands::set_maximum_dutycycle;
         pkt.value1 = max_pwm_duty;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %.3f%%", max_pwm_duty);
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set maximum PWM dutycycle");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f", max_pwm_duty);
+        }
     }
 
     // Send velocity filter cutoff
@@ -419,8 +422,12 @@ private:
         MobilityCommandPacket pkt {};
         pkt.command_id = MobilityCommands::set_lowpass_fc;
         pkt.value1 = fc;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new velocity filter cutoff: %.3f Hz", fc);
+
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set velocity filter cutoff");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new velocity filter cutoff: %f Hz", fc);
+        }
     }
 
     // Send PID parameters
@@ -430,8 +437,12 @@ private:
         pkt.value1 = kp;
         pkt.value2 = ki;
         pkt.value3 = kd;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new PID parameters: kp:%.3f, ki:%.3f, kd:%.3f", kp, ki, kd);
+
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set PID parameters");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new PID parameters: kp:%f, ki:%f, kd:%f", kp, ki, kd);
+        }
     }
 
     // Send PID bounds
@@ -441,8 +452,12 @@ private:
         pkt.value1 = p_bound;
         pkt.value2 = i_bound;
         pkt.value3 = d_bound;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new PID boundaries: p:%.3f, i:%.3f, d:%.3f", p_bound, i_bound, d_bound);
+
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set PID boundaries");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new PID boundaries: p:%f, i:%f, d:%f", p_bound, i_bound, d_bound);
+        }
     }
 
     // Send feedforward parameters
@@ -453,8 +468,12 @@ private:
         pkt.value2 = 0.0f; // ka
         pkt.value3 = 0.0f; // kj
         pkt.value4 = voff;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new Feed Forward parameters: kv:%.3f, voff:%.3f", kv, voff);
+
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set Feed Forward parameters");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new Feed Forward parameters: kv:%f, v_off:%f", kv, voff);
+        }
     }
 
     // Send maximum velocity
@@ -471,8 +490,12 @@ private:
         MobilityCommandPacket pkt {};
         pkt.command_id = MobilityCommands::set_feedback_hz;
         pkt.value1 = feedback_rate_hz;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new feedback rate: %.3f Hz", feedback_rate_hz);
+
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to feedback rate");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new feedback rate: %f Hz", feedback_rate_hz);
+        }
     }
 
     // Send motor control rate
@@ -480,8 +503,11 @@ private:
         MobilityCommandPacket pkt {};
         pkt.command_id = MobilityCommands::set_control_hz;
         pkt.value1 = motor_control_rate_hz;
-        send_usb_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new motor control rate: %.3f Hz", motor_control_rate_hz);
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set motor control rate");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new motor control rate: %f Hz", motor_control_rate_hz);
+        }
     }
 
     // Start / Stop controller
@@ -489,19 +515,24 @@ private:
         MobilityCommandPacket pkt {};
         pkt.command_id = MobilityCommands::control_enable;
         pkt.value1 = start ? 1.0f : 0.0f;
+        if (!send_usb_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to start controller");
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Started controller");
+        }
     }
 
     bool receive_motor_feedback_bytes(MobilityFeedback* feedback) {
         if (!feedback) return false;
-    
+
         MobilityFeedbackPacket packet {};
         int bytes_received = protocol_->read_bytes(&packet, sizeof(packet), std::chrono::milliseconds(10));
-    
+
         if (bytes_received != sizeof(packet)) {
             RCLCPP_WARN(this->get_logger(), "Incomplete motor feedback received: %d/%zu bytes", bytes_received, sizeof(packet));
             return false;
         }
-    
+
         // Copy data from the received packet to the feedback structure
         for (int i = 0; i < 4; i++) {
             feedback->positions[i] = packet.positions[i];
@@ -509,20 +540,19 @@ private:
             feedback->pwm_duties[i] = packet.pwm_duties[i];
         }
 
-    
         // Keep logs
         RCLCPP_INFO(this->get_logger(),
-                    "Velocity Feedback: V1:%d, V2:%d, V3:%d, V4:%d",
-                    feedback->velocities[0], feedback->velocities[1], feedback->velocities[2], feedback->velocities[3]);
+            "Velocity Feedback: V1:%d, V2:%d, V3:%d, V4:%d",
+            feedback->velocities[0], feedback->velocities[1], feedback->velocities[2], feedback->velocities[3]);
         RCLCPP_INFO(this->get_logger(),
-                    "Position Feedback: P1:%d, P2:%d, P3:%d, P4:%d",
-                    feedback->positions[0], feedback->positions[1], feedback->positions[2], feedback->positions[3]);
+            "Position Feedback: P1:%d, P2:%d, P3:%d, P4:%d",
+            feedback->positions[0], feedback->positions[1], feedback->positions[2], feedback->positions[3]);
         RCLCPP_INFO(this->get_logger(),
-                    "PWM Duties: D1:%d, D2:%d, D3:%d, D4:%d",
-                    feedback->pwm_duties[0], feedback->pwm_duties[1], feedback->pwm_duties[2], feedback->pwm_duties[3]);
-    
+            "PWM Duties: D1:%d, D2:%d, D3:%d, D4:%d",
+            feedback->pwm_duties[0], feedback->pwm_duties[1], feedback->pwm_duties[2], feedback->pwm_duties[3]);
+
         return true;
-    }    
+    }
 
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
@@ -544,20 +574,10 @@ private:
         rclcpp::Time current_time = this->get_clock()->now();
         double dt = (current_time - prev_odom_time_).seconds();
 
-        if (receive_motor_feedback(&feedback_)) {
+        if (receive_motor_feedback_bytes(&feedback_)) {
             for (int i = 0; i < 4; i++) {
                 wheel_encoder_velocities_steps_sec[i] = feedback_.velocities[i];
             }
-            RCLCPP_INFO(this->get_logger(), "Velocity Feedback: V1:%d, V2:%d, V3:%d, V4:%d",
-                feedback_.velocities[0],
-                feedback_.velocities[1],
-                feedback_.velocities[2],
-                feedback_.velocities[3]);
-            RCLCPP_INFO(this->get_logger(), "Position Feedback: P1:%d, P2:%d, P3:%d, P4:%d",
-                feedback_.positions[0],
-                feedback_.positions[1],
-                feedback_.positions[2],
-                feedback_.positions[3]);
         } else {
             RCLCPP_INFO(this->get_logger(), "Received Feedback: None");
         }
@@ -680,26 +700,26 @@ private:
             wheel_velocities[back_left] = (left_vel / max_velocity) * 100.0;
             wheel_velocities[front_right] = (right_vel / max_velocity) * 100.0;
             wheel_velocities[back_right] = (right_vel / max_velocity) * 100.0;
-            send_pwm_duty(wheel_velocities);
+            send_pwm_duty_bytes(wheel_velocities);
         } else {
             wheel_velocities[front_left] = left_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[back_left] = left_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[front_right] = right_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[back_right] = right_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
-            send_target_velocity(wheel_velocities);
+            send_target_velocity_bytes(wheel_velocities);
         }
 
     }
 
     bool init_motor_controller() {
         try {
-            send_start_stop(true);
+            send_start_stop_bytes(true);
 
-            send_max_pwm_duty(max_pwm_dutycycle_);
-            send_pid_params(pid_kp_, pid_ki_, pid_kd_);
-            send_pid_bounds(pid_p_bound_, pid_i_bound_, pid_d_bound_);
-            send_lowpass_cutoff(velocity_filter_cutoff_hz_);
-            send_feedback_rate(feedback_rate_hz_);
+            send_max_pwm_duty_bytes(max_pwm_dutycycle_);
+            send_pid_params_bytes(pid_kp_, pid_ki_, pid_kd_);
+            send_pid_bounds_bytes(pid_p_bound_, pid_i_bound_, pid_d_bound_);
+            send_lowpass_cutoff_bytes(velocity_filter_cutoff_hz_);
+            send_feedback_rate_bytes(feedback_rate_hz_);
             return true;
         } catch (std::runtime_error& err) {
             RCLCPP_ERROR(this->get_logger(), "Failed to send data to device");
@@ -740,7 +760,7 @@ private:
         if (ret != 1) {
             RCLCPP_ERROR(this->get_logger(), "Failed to set maximum PWM dutycycle");
         } else {
-            RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f%", max_pwm_duty);
+            RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f", max_pwm_duty);
         }
     }
 
