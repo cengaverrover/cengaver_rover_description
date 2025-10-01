@@ -59,6 +59,24 @@ def generate_launch_description():
             parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
     )
 
+    control = Node(
+            condition=IfCondition(use_control),
+            package='cengaver_rover_description',
+            executable='control_node',
+            name='control_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'custom_controller.yaml')],
+    )
+    
+    usb_cam = Node(
+            condition=IfCondition(use_usb_cam),
+            package='usb_cam',
+            executable='usb_cam_node_exe',
+            name='usb_cam_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'usb_camera_params.yaml')],
+    )
+
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
     rviz = Node(
         condition=IfCondition(use_rviz),
