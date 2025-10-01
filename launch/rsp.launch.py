@@ -8,6 +8,7 @@ from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
 from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources  import PythonLaunchDescriptionSource
 from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 
 import xacro
@@ -21,6 +22,9 @@ def generate_launch_description():
     use_foxglove_bridge = LaunchConfiguration('use_foxglove')
     use_rviz= LaunchConfiguration('use_rviz')
     use_twist_mux= LaunchConfiguration('use_twist_mux')
+    use_robot_localization = LaunchConfiguration('use_robot_localization')
+    use_control = LaunchConfiguration('use_control')
+    use_usb_cam = LaunchConfiguration('use_usb_cam')
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -41,15 +45,18 @@ def generate_launch_description():
     foxglove_bridge = IncludeLaunchDescription(
             XMLLaunchDescriptionSource([os.path.join(
                 get_package_share_directory('foxglove_bridge'), 'launch', 'foxglove_bridge_launch.xml')]),
-            condition=IfCondition(use_foxglove_bridge)
+            condition=IfCondition(use_foxglove_bridge),
+            launch_arguments={'use_sim_time': use_sim_time, 'max_qos_depth': '400'}.items()
     )
 
-
-        # Create a foxglove_bridge
-    foxglove_bridge = IncludeLaunchDescription(
-            XMLLaunchDescriptionSource([os.path.join(
-                get_package_share_directory('foxglove_bridge'), 'launch', 'foxglove_bridge_launch.xml')]),
-            condition=IfCondition(use_foxglove_bridge)
+    
+    robot_localization = Node(
+            condition=IfCondition(use_robot_localization),
+            package='robot_localization',
+            executable='ukf_node',
+            name='ukf_filter_node',
+            output='screen',
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
     )
 
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
@@ -81,6 +88,8 @@ def generate_launch_description():
         arguments=['--params-file', os.path.join(
                     pkg_path, 'config', 'twist_mux.yaml')] 
     )
+    
+    
 
     # Launch!
     return LaunchDescription([
@@ -94,7 +103,7 @@ def generate_launch_description():
             description='Use ros2_control if true'),
         DeclareLaunchArgument(
            'use_foxglove',
-           default_value='false',
+           default_value='true',
            description='Use foxglove_bridge if true'),
         DeclareLaunchArgument(
            'use_rviz',
@@ -104,11 +113,26 @@ def generate_launch_description():
            'use_twist_mux',
            default_value='false',
            description='Use twist_mux if true'),
+        DeclareLaunchArgument(
+            'use_robot_localization',
+            default_value='true',
+            description='Use robot_localization for odom if true'),        
+        DeclareLaunchArgument(
+            'use_control',
+            default_value='false',
+            description='Use control_node for driving real robot if true'),
+         DeclareLaunchArgument(
+            'use_usb_cam',
+            default_value='false',
+            description='Use usb_cam to for camera if true'),
 
         node_robot_state_publisher,
         laser_filter,
         foxglove_bridge,
         twist_mux,
+        robot_localization,
+        control,
+        usb_cam,
         rviz        
 
     ])
