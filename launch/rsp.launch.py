@@ -23,7 +23,7 @@ def generate_launch_description():
     use_rviz= LaunchConfiguration('use_rviz')
     use_twist_mux= LaunchConfiguration('use_twist_mux')
     use_robot_localization = LaunchConfiguration('use_robot_localization')
-    use_control = LaunchConfiguration('use_control')
+    use_control_usb = LaunchConfiguration('use_control_usb')
     use_usb_cam = LaunchConfiguration('use_usb_cam')
 
     # Process the URDF file
@@ -60,12 +60,12 @@ def generate_launch_description():
     )
 
     control = Node(
-            condition=IfCondition(use_control),
+            condition=IfCondition(use_control_usb),
             package='cengaver_rover_description',
-            executable='control_node',
-            name='control_node',
+            executable='mobility_control',
+            name='mobility_control',
             output='screen',
-            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'custom_controller.yaml')],
+            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'mobility_control_usb.yaml')],
     )
     
     usb_cam = Node(
@@ -106,8 +106,6 @@ def generate_launch_description():
         arguments=['--params-file', os.path.join(
                     pkg_path, 'config', 'twist_mux.yaml')] 
     )
-    
-    
 
     # Launch!
     return LaunchDescription([
