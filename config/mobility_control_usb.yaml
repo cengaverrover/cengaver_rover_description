@@ -2,7 +2,7 @@ control_node:
   ros__parameters:
 
     protocol: "usb"
-    serial_port: "/dev/ttyACM0"
+    serial_port: "/dev/ttyACM1"
 
     publish_rate: 50.0
 
