@@ -15,6 +15,8 @@ import xacro
 
 
 def generate_launch_description():
+    
+    package_name='cengaver_rover_description' #<--- CHANGE ME
 
     # Check if we're told to use sim time
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -23,8 +25,7 @@ def generate_launch_description():
     use_rviz= LaunchConfiguration('use_rviz')
     use_twist_mux= LaunchConfiguration('use_twist_mux')
     use_robot_localization = LaunchConfiguration('use_robot_localization')
-    use_control_usb = LaunchConfiguration('use_control_usb')
-    use_usb_cam = LaunchConfiguration('use_usb_cam')
+
 
     # Process the URDF file
     pkg_path = os.path.join(get_package_share_directory('cengaver_rover_description'))
@@ -57,24 +58,6 @@ def generate_launch_description():
             name='ukf_filter_node',
             output='screen',
             parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'ukf.yaml')],
-    )
-
-    control = Node(
-            condition=IfCondition(use_control_usb),
-            package='cengaver_rover_description',
-            executable='mobility_control',
-            name='mobility_control',
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'mobility_control_usb.yaml')],
-    )
-    
-    usb_cam = Node(
-            condition=IfCondition(use_usb_cam),
-            package='usb_cam',
-            executable='usb_cam_node_exe',
-            name='usb_cam_node',
-            output='screen',
-            parameters=[{'use_sim_time': use_sim_time}, os.path.join(pkg_path, 'config', 'usb_camera_params.yaml')],
     )
 
     rviz_config_path = os.path.join(pkg_path, 'config', 'urdf_config.rviz')
@@ -133,22 +116,12 @@ def generate_launch_description():
             'use_robot_localization',
             default_value='true',
             description='Use robot_localization for odom if true'),        
-        DeclareLaunchArgument(
-            'use_control',
-            default_value='false',
-            description='Use control_node for driving real robot if true'),
-         DeclareLaunchArgument(
-            'use_usb_cam',
-            default_value='false',
-            description='Use usb_cam to for camera if true'),
 
         node_robot_state_publisher,
         laser_filter,
         foxglove_bridge,
         twist_mux,
         robot_localization,
-        control,
-        usb_cam,
         rviz        
 
     ])

@@ -1,0 +1,5 @@
+source;share/cengaver_rover_description/local_setup.bash
+source;share/cengaver_rover_description/local_setup.dsv
+source;share/cengaver_rover_description/local_setup.ps1
+source;share/cengaver_rover_description/local_setup.sh
+source;share/cengaver_rover_description/local_setup.zsh

@@ -22,6 +22,7 @@ set(CXX_STANDARD 20)
 add_executable(mobility_control
   src/mobility_control_node.cpp
   src/serialib.cpp
+  src/icommunication_protocol.cpp
   src/usb_protocol.cpp)
 target_include_directories(mobility_control PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/include

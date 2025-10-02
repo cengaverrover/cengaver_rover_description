@@ -1,0 +1,60 @@
+[0.014s] Invoking command in '/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description -DCMAKE_BUILD_TYPE=Release -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/install/cengaver_rover_description
+[0.076s] -- The C compiler identification is GNU 11.4.0
+[0.133s] -- The CXX compiler identification is GNU 11.4.0
+[0.141s] -- Detecting C compiler ABI info
+[0.196s] -- Detecting C compiler ABI info - done
+[0.203s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.203s] -- Detecting C compile features
+[0.204s] -- Detecting C compile features - done
+[0.207s] -- Detecting CXX compiler ABI info
+[0.292s] -- Detecting CXX compiler ABI info - done
+[0.300s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.301s] -- Detecting CXX compile features
+[0.301s] -- Detecting CXX compile features - done
+[0.305s] -- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)
+[0.514s] -- Found Python3: /usr/bin/python3 (found version "3.10.12") found components: Interpreter 
+[0.596s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.642s] -- Found rclcpp: 16.0.12 (/opt/ros/humble/share/rclcpp/cmake)
+[0.702s] -- Found rosidl_generator_c: 3.1.6 (/opt/ros/humble/share/rosidl_generator_c/cmake)
+[0.708s] -- Found rosidl_adapter: 3.1.6 (/opt/ros/humble/share/rosidl_adapter/cmake)
+[0.719s] -- Found rosidl_generator_cpp: 3.1.6 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)
+[0.732s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.757s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.841s] -- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)
+[0.846s] -- Found rmw_cyclonedds_cpp: 1.3.4 (/opt/ros/humble/share/rmw_cyclonedds_cpp/cmake)
+[0.876s] -- Using RMW implementation 'rmw_cyclonedds_cpp' as default
+[0.887s] -- Looking for pthread.h
+[0.947s] -- Looking for pthread.h - found
+[0.948s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+[1.008s] -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+[1.009s] -- Found Threads: TRUE  
+[1.063s] -- Found sensor_msgs: 4.8.0 (/opt/ros/humble/share/sensor_msgs/cmake)
+[1.094s] -- Found nav_msgs: 4.8.0 (/opt/ros/humble/share/nav_msgs/cmake)
+[1.111s] -- Found tf2: 0.25.12 (/opt/ros/humble/share/tf2/cmake)
+[1.123s] -- Found tf2_ros: 0.25.12 (/opt/ros/humble/share/tf2_ros/cmake)
+[1.207s] -- Found ament_lint_auto: 0.12.12 (/opt/ros/humble/share/ament_lint_auto/cmake)
+[1.360s] -- Added test 'cppcheck' to perform static code analysis on C / C++ code
+[1.360s] -- Configured cppcheck include dirs: /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/include
+[1.360s] -- Configured cppcheck exclude dirs and/or files: 
+[1.368s] -- Added test 'flake8' to check Python code syntax and style conventions
+[1.384s] -- Added test 'lint_cmake' to check CMake code style
+[1.392s] -- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+[1.460s] -- Added test 'uncrustify' to check C / C++ code style
+[1.460s] -- Configured uncrustify additional arguments: 
+[1.469s] -- Added test 'xmllint' to check XML markup files
+[1.471s] -- Configuring done
+[1.485s] -- Generating done
+[1.503s] -- Build files have been written to: /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description
+[1.517s] Invoked command in '/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description -DCMAKE_BUILD_TYPE=Release -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/install/cengaver_rover_description
+[1.520s] Invoking command in '/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description -- -j16 -l16
+[1.536s] 
+[1.536s] [0/7] Building CXX object CMakeFiles/mobility_control.dir/src/mobility_control_node.cpp.o[K
+[1.536s] [0/7] Building CXX object CMakeFiles/mobility_control.dir/src/icommunication_protocol.cpp.o[K
+[1.537s] [0/7] Building CXX object CMakeFiles/mobility_control.dir/src/serialib.cpp.o[K
+[1.537s] [0/7] Building CXX object CMakeFiles/laser_filter.dir/src/laser_filter_node.cpp.o[K
+[2.120s] [0/7] Building CXX object CMakeFiles/mobility_control.dir/src/usb_protocol.cpp.o[K
+[2.217s] [1/7] Building CXX object CMakeFiles/mobility_control.dir/src/icommunication_protocol.cpp.o[K
+[2.230s] [2/7] Building CXX object CMakeFiles/mobility_control.dir/src/usb_protocol.cpp.o[K
+[5.672s] [3/7] Building CXX object CMakeFiles/mobility_control.dir/src/serialib.cpp.o[K
+[5.673s] ninja: build stopped: interrupted by user.
+[5.677s] Invoked command in '/home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description' returned '-2': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/alper/Documents/ros2-projects/sim_ws/src/cengaver_rover_description/build/cengaver_rover_description -- -j16 -l16
