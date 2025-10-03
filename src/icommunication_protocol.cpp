@@ -38,14 +38,14 @@ bool ICommunicationProtocol::send_init_packet(MobilityInitPacket& packet) {
     }
 }
 
-bool ICommunicationProtocol::receive_motor_feedback_bytes(MobilityFeedbackPacket* feedback) {
+bool ICommunicationProtocol::receive_motor_feedback_bytes(MobilityFeedbackPacket* feedback, std::chrono::milliseconds timeout) {
     if (!feedback) return false;
 
     static std::vector<uint8_t> buffer;
     buffer.reserve(2 * sizeof(MobilityFeedbackPacket));
 
     uint8_t temp[64]; // read in small chunks
-    int bytes_read = read_bytes(temp, sizeof(temp), std::chrono::milliseconds(1));
+    int bytes_read = read_bytes(temp, sizeof(temp), timeout);
 
     if (bytes_read <= 0) return false;
 

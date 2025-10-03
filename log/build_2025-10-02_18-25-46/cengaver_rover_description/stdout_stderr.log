@@ -1,8 +1,0 @@
-
-[0/6] Building CXX object CMakeFiles/mobility_control.dir/src/mobility_control_node.cpp.o[K
-[0/6] Building CXX object CMakeFiles/mobility_control.dir/src/icommunication_protocol.cpp.o[K
-[0/6] Building CXX object CMakeFiles/laser_filter.dir/src/laser_filter_node.cpp.o[K
-[0/6] Building CXX object CMakeFiles/mobility_control.dir/src/usb_protocol.cpp.o[K
-[1/6] Building CXX object CMakeFiles/mobility_control.dir/src/icommunication_protocol.cpp.o[K
-[2/6] Building CXX object CMakeFiles/mobility_control.dir/src/usb_protocol.cpp.o[K
-ninja: build stopped: interrupted by user.

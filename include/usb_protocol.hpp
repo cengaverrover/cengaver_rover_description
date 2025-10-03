@@ -17,10 +17,6 @@ public:
 
     int read_bytes(void* buffer, int max_length, std::chrono::milliseconds timeout) override;
 
-    int write_string(const std::string& msg) override;
-
-    std::string read_string(std::chrono::milliseconds timeout) override;
-
     void close() override;
 
     ~UsbProtocol() override;

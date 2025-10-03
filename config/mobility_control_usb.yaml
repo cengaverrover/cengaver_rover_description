@@ -21,9 +21,9 @@ mobility_control:
     max_pwm_dutycycle: 80.0
     velocity_filter_cutoff: 100.0
 
-    pid_kp: 1.0
-    pid_ki: 0.01
-    pid_kd: 0.0001
+    pid_kp: 0.01
+    pid_ki: 0.00
+    pid_kd: 0.000
 
     pid_p_bound: 100.0
     pid_i_bound: 50.0
@@ -32,10 +32,10 @@ mobility_control:
     overwrite_pinout: true
     motor_lpwm_pins: [2, 6, 4, 8]
     motor_rpwm_pins: [3, 7, 5, 9]
-    motor_encoder_a_pins: [10, 14, 12, 2]
-    motor_swap_dirs: [0, 0, 0, 0]
+    motor_encoder_a_pins: [10, 14, 12, 20]
+    motor_swap_dirs: [1, 0, 0, 0]
 
-    is_open_loop: true
+    is_open_loop: false
 
     base_frame_id: base_link
     odom_frame_id: odom
@@ -58,8 +58,8 @@ mobility_control:
     angular.z.has_velocity_limits: true
     #angular.z.has_acceleration_limits: true
     # angular.z.has_jerk_limits: false
-    angular.z.max_velocity: 2.50
-    angular.z.min_velocity: -2.50
+    angular.z.max_velocity: 2.0
+    angular.z.min_velocity: -2.0
     #angular.z.max_acceleration: 5.0
     #angular.z.min_acceleration: -5.0
     # angular.z.max_jerk: NAN

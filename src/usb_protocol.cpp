@@ -49,22 +49,6 @@ int UsbProtocol::read_bytes(void* buffer, int max_length, std::chrono::milliseco
     }
 }
 
-int UsbProtocol::write_string(const std::string& msg) {
-    int ret = serial_.writeString(msg.c_str());
-    return ret;
-}
-
-std::string UsbProtocol::read_string(std::chrono::milliseconds timeout) {
-    int numChars = serial_.readString(read_buffer_, '\n', 1023, timeout.count());
-    if (numChars == 0) {
-        return std::string();
-    } else if (numChars > 0) {
-        return std::string(read_buffer_, numChars);
-    } else {
-        throw std::runtime_error("USB Read Error");
-    }
-}
-
 void UsbProtocol::close() {
     serial_.closeDevice();
     is_open_ = false;

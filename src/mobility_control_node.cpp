@@ -42,6 +42,10 @@ public:
 
         jointStatePublisher_ = this->create_publisher<sensor_msgs::msg::JointState>(joint_states_topic_,
             rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+
+        odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odom_topic_,
+            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+
         size_t jointCount = wheel_joint_names_.size();
         wheel_joint_states_.name.reserve(jointCount);
         wheel_joint_states_.position.reserve(jointCount);
@@ -53,9 +57,19 @@ public:
             wheel_joint_states_.name[i] = wheel_joint_names_[i];
         }
 
-        odom_publisher_ = this->create_publisher<nav_msgs::msg::Odometry>(odom_topic_,
-            rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_system_default)));
+        // Initialize timers but keep them disabled
+        odom_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / feedback_rate_hz_)),
+            std::bind(&MobilityControlNode::publish_odometry_and_joint_states, this));
+        odom_timer_->cancel();
+        controller_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / command_publish_rate_hz_)),
+            std::bind(&MobilityControlNode::command_controller, this));
+        controller_timer_->cancel();
 
+        communication_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / feedback_rate_hz_)),
+            std::bind(&MobilityControlNode::communication_loop, this));
 
         if (protocol_type_ == "usb") {
             protocol_ = std::make_unique<UsbProtocol>();
@@ -65,9 +79,12 @@ public:
             throw std::runtime_error("Unsupported protocol");
         }
 
-        comm_thread_ = std::thread([this]() { comm_loop(); });
-
-
+        if (protocol_->open(device_)) {
+            if (init_motor_controller()) {
+                enable_timers(true);
+                communication_established_ = true;
+            }
+        }
     }
 private:
 
@@ -79,9 +96,7 @@ private:
     };
 
     std::unique_ptr<ICommunicationProtocol> protocol_;
-    std::thread comm_thread_;
-    std::atomic<bool> running_ { true };
-    std::mutex feedback_mutex_;
+
     MobilityFeedbackPacket latest_feedback_ {};
 
     rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscriber_ {};
@@ -89,8 +104,8 @@ private:
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher_ {};
     rclcpp::TimerBase::SharedPtr odom_timer_ {};
     rclcpp::TimerBase::SharedPtr controller_timer_ {};
+    rclcpp::TimerBase::SharedPtr communication_timer_ {};
     sensor_msgs::msg::JointState wheel_joint_states_ {};
-
 
     std::string protocol_type_ { "usb" };
 
@@ -115,8 +130,8 @@ private:
     std::vector<std::string> wheel_joint_names_ {
         "front_left_wheel",
         "front_right_wheel",
-        "back_right_wheel",
-        "back_left_wheel"
+        "back_left_wheel",
+        "back_right_wheel"
     };
     std::string base_frame_id_ { "base_link" };
     std::string odom_frame_id_ { "odom" };
@@ -143,6 +158,7 @@ private:
     double cmd_vel_timeout_sec_ = 0.5;
 
     bool is_open_loop_ = true;
+    bool encoders_connected_ = true;
 
     bool linear_x_has_velocity_limits_ = false;
     double linear_x_max_velocity_ = 1.0;
@@ -155,6 +171,8 @@ private:
     std::string serial_port_ { "/dev/ttyACM0" };
     std::string device_ { "/dev/ttyACM0" };
 
+    std::array<float, 4> target_velocities_ { 0, 0, 0, 0 };
+
     rclcpp::Time prev_cmd_vel_time_ { this->get_clock()->now() };
     rclcpp::Time prev_odom_time_ { this->get_clock()->now() };
     rclcpp::Time prev_log_time_ { this->get_clock()->now() };
@@ -165,225 +183,57 @@ private:
 
     MobilityFeedbackPacket feedback_ {};
 
-    void comm_loop() {
-
-        while (!protocol_->open(device_)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to open device %s", device_.c_str());
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    void enable_timers(bool enable) {
+        if (enable) {
+            if (odom_timer_->is_canceled()) {
+                RCLCPP_INFO(this->get_logger(), "Enabling odometry and control timers.");
+                odom_timer_->reset();
+                controller_timer_->reset();
+            }
+        } else {
+            if (!odom_timer_->is_canceled()) {
+                RCLCPP_WARN(this->get_logger(), "Disabling odometry and control timers.");
+                odom_timer_->cancel();
+                controller_timer_->cancel();
+            }
         }
-        RCLCPP_INFO(this->get_logger(), "Connected to %s", device_.c_str());
+    }
 
-        RCLCPP_INFO(this->get_logger(), "Initializing controller...");
-        while (!init_motor_controller()) {
-            RCLCPP_ERROR(this->get_logger(), "Could not initialize controller!");
-        }
+    bool communication_established_ = false;
 
-        // Make shared state
-        odom_timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / feedback_rate_hz_)),
-            std::bind(&MobilityControlNode::publish_odometry_and_joint_states,
-                this));
-        controller_timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(static_cast<int64_t>(1000.0 / command_publish_rate_hz_)),
-            std::bind(&MobilityControlNode::command_controller,
-                this));
+    void communication_loop() {
 
-        while (running_) {
-            if (protocol_->is_open()) {
-                MobilityFeedbackPacket fb;
-                if (protocol_->receive_motor_feedback_bytes(&fb)) {
-                    std::lock_guard<std::mutex> lock(feedback_mutex_);
-                    latest_feedback_ = fb;
-                }
-                // Avoid busy spin
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            } else {
-                protocol_->close();
+        if (protocol_->is_open()) {
+            MobilityFeedbackPacket fb;
+            if (protocol_->receive_motor_feedback_bytes(&fb, std::chrono::milliseconds(1))) {
+                latest_feedback_ = fb;
+            }
+        } else {
+
+            if (communication_established_) {
                 RCLCPP_ERROR(this->get_logger(), "Device connection lost. Trying to reconnect to %s", device_.c_str());
-                // Cancel timers if they exist
-                if (odom_timer_) { odom_timer_->cancel(); odom_timer_.reset(); }
-                if (controller_timer_) { controller_timer_->cancel(); controller_timer_.reset(); }
-
-
-                while (!protocol_->open(device_)) {
-                    RCLCPP_ERROR(this->get_logger(), "Trying to reconnect to device %s", device_.c_str());
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                }
-                RCLCPP_INFO(this->get_logger(), "Connected to %s", device_.c_str());
-
-                RCLCPP_INFO(this->get_logger(), "Initializing controller...");
-                while (!init_motor_controller()) {
-                    RCLCPP_ERROR(this->get_logger(), "Could not initialize controller!");
-                }
-                // Make shared state
-                odom_timer_ = this->create_wall_timer(
-                    std::chrono::milliseconds(static_cast<int64_t>(1000.0 / feedback_rate_hz_)),
-                    std::bind(&MobilityControlNode::publish_odometry_and_joint_states,
-                        this));
-                controller_timer_ = this->create_wall_timer(
-                    std::chrono::milliseconds(static_cast<int64_t>(1000.0 / command_publish_rate_hz_)),
-                    std::bind(&MobilityControlNode::command_controller,
-                        this));
+                communication_established_ = false;
             }
 
+            enable_timers(false);
+            protocol_->close();
+            // Cancel timers if they exist
+
+            if (!protocol_->open(device_)) {
+                return;
+            }
+
+            communication_established_ = true;
+            RCLCPP_INFO(this->get_logger(), "Connected to %s", device_.c_str());
+
+            RCLCPP_INFO(this->get_logger(), "Initializing controller...");
+            if (!init_motor_controller()) {
+                RCLCPP_ERROR(this->get_logger(), "Could not initialize controller!");
+                return;
+            }
+            enable_timers(true);
         }
-    }
 
-
-    // Send target wheel velocities
-    void send_target_velocity_bytes(const std::array<float, 4>& target_velocities) {
-        MobilityCommandPacket pkt {};
-
-        pkt.command_id = MobilityCommands::set_velocity;
-        pkt.value1 = target_velocities[0];
-        pkt.value2 = target_velocities[1];
-        pkt.value3 = target_velocities[2];
-        pkt.value4 = target_velocities[3];
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to send target velocities to device");
-        }
-    }
-
-    // Send PWM duty cycles
-    void send_pwm_duty_bytes(const std::array<float, 4>& duties) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_dutycycle;
-        pkt.value1 = duties[0];
-        pkt.value2 = duties[1];
-        pkt.value3 = duties[2];
-        pkt.value4 = duties[3];
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to send PWM dutycycles to device");
-        }
-    }
-
-    // Send maximum PWM duty
-    void send_max_pwm_duty_bytes(float max_pwm_duty) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_maximum_dutycycle;
-        pkt.value1 = max_pwm_duty;
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set maximum PWM dutycycle");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f", max_pwm_duty);
-        }
-    }
-
-    // Send velocity filter cutoff
-    void send_lowpass_cutoff_bytes(float fc) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_lowpass_fc;
-        pkt.value1 = fc;
-
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set velocity filter cutoff");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new velocity filter cutoff: %f Hz", fc);
-        }
-    }
-
-    // Send PID parameters
-    void send_pid_params_bytes(float kp, float ki, float kd) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_pid_params;
-        pkt.value1 = kp;
-        pkt.value2 = ki;
-        pkt.value3 = kd;
-
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set PID parameters");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new PID parameters: kp:%f, ki:%f, kd:%f", kp, ki, kd);
-        }
-    }
-
-    // Send PID bounds
-    void send_pid_bounds_bytes(float p_bound, float i_bound, float d_bound) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_pid_bounds;
-        pkt.value1 = p_bound;
-        pkt.value2 = i_bound;
-        pkt.value3 = d_bound;
-
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set PID boundaries");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new PID boundaries: p:%f, i:%f, d:%f", p_bound, i_bound, d_bound);
-        }
-    }
-
-    // Send feedforward parameters
-    void send_feedforward_params_bytes(float kv, float voff) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_ff_params;
-        pkt.value1 = kv;
-        pkt.value2 = 0.0f; // ka
-        pkt.value3 = 0.0f; // kj
-        pkt.value4 = voff;
-
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set Feed Forward parameters");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new Feed Forward parameters: kv:%f, v_off:%f", kv, voff);
-        }
-    }
-
-    // Send maximum velocity
-    void send_max_velocity_bytes(float max_vel) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_max_velocity;
-        pkt.value1 = max_vel;
-        protocol_->send_command_packet(pkt);
-        RCLCPP_INFO(this->get_logger(), "Setted new maximum velocity: %.3f", max_vel);
-    }
-
-    // Send feedback rate
-    void send_feedback_rate_bytes(float feedback_rate_hz) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_feedback_hz;
-        pkt.value1 = feedback_rate_hz;
-
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to feedback rate");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new feedback rate: %f Hz", feedback_rate_hz);
-        }
-    }
-
-    // Send motor control rate
-    void send_motor_control_rate_bytes(float motor_control_rate_hz) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::set_control_hz;
-        pkt.value1 = motor_control_rate_hz;
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to set motor control rate");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Setted new motor control rate: %f Hz", motor_control_rate_hz);
-        }
-    }
-
-    // Open loop enable / disable
-    void send_open_loop_enable_bytes(bool enable) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::open_loop_enable;
-        pkt.value1 = enable ? 1.0f : 0.0f;
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to enable/disable open loop control");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "%s open loop control", enable ? "Enabled" : "Disabled");
-        }
-    }
-
-    // Start / Stop controller
-    void send_start_stop_bytes(bool start) {
-        MobilityCommandPacket pkt {};
-        pkt.command_id = MobilityCommands::control_enable;
-        pkt.value1 = start ? 1.0f : 0.0f;
-        if (!protocol_->send_command_packet(pkt)) {
-            RCLCPP_ERROR(this->get_logger(), "Failed to start controller");
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Started controller");
-        }
     }
 
     void cmd_vel_callback(const geometry_msgs::msg::Twist& msg) {
@@ -405,18 +255,23 @@ private:
         rclcpp::Time current_time = this->get_clock()->now();
         double dt = (current_time - prev_odom_time_).seconds();
 
-        {
-            std::lock_guard<std::mutex> lock(feedback_mutex_);
-            feedback_ = latest_feedback_;
-        }
+        feedback_ = latest_feedback_;
         for (int i = 0; i < 4; i++) {
             wheel_encoder_velocities_steps_sec[i] = feedback_.velocities[i];
         }
         if ((current_time - prev_log_time_).seconds() >= 0.1) {
             RCLCPP_INFO(this->get_logger(), "PWM: D0:%.2f, D1:%.2f, D2:%.2f, D3:%.2f",
                 feedback_.pwm_duties[0], feedback_.pwm_duties[1], feedback_.pwm_duties[2], feedback_.pwm_duties[3]);
-            
+            RCLCPP_INFO(this->get_logger(), "Pos: P0:%.2f, P1:%.2f, P2:%.2f, P3:%.2f",
+                feedback_.positions[0], feedback_.positions[1], feedback_.positions[2], feedback_.positions[3]);
+            RCLCPP_INFO(this->get_logger(), "Vel: V0:%.2f, V1:%.2f, V2:%.2f, V3:%.2f",
+                feedback_.velocities[0], feedback_.velocities[1], feedback_.velocities[2], feedback_.velocities[3]);
+            RCLCPP_INFO(this->get_logger(), "TargetVel: T0:%.2f, T1:%.2f, T2:%.2f, T3:%.2f",
+                target_velocities_[0], target_velocities_[1], target_velocities_[2], target_velocities_[3]);
             prev_log_time_ = current_time;
+            /*RCLCPP_INFO(this->get_logger(), "Pos: P0:%.2f, P1:%.2f, P2:%.2f, P3:%.2f",
+                feedback_.positions[0], feedback_.positions[1], feedback_.positions[2], feedback_.positions[3]);
+            prev_log_time_ = current_time;*/
         }
 
         if ((current_time - prev_cmd_vel_time_).seconds() > cmd_vel_timeout_sec_) {
@@ -436,7 +291,7 @@ private:
         double right_side_velocity = 0;
         std::vector<double>wheel_angular_velocities { 0.0, 0.0, 0.0, 0.0 };
 
-        if (is_open_loop_) {
+        if (!encoders_connected_) {
 
             robot_linear_velocity = cmd_vel_.linear.x;
             robot_angular_velocity = cmd_vel_.angular.z;
@@ -531,19 +386,24 @@ private:
         double left_vel = v - (wheel_separation_ / 2.0) * w;
         double right_vel = v + (wheel_separation_ / 2.0) * w;
 
+        bool res = false;
         if (is_open_loop_) {
-            double max_velocity = sqrt(linear_x_max_velocity_ * linear_x_max_velocity_ + angular_z_max_velocity_ * angular_z_max_velocity_);
+            double max_velocity = linear_x_max_velocity_;
             wheel_velocities[front_left] = (left_vel / max_velocity) * 100.0;
             wheel_velocities[back_left] = (left_vel / max_velocity) * 100.0;
             wheel_velocities[front_right] = (right_vel / max_velocity) * 100.0;
             wheel_velocities[back_right] = (right_vel / max_velocity) * 100.0;
-            send_pwm_duty_bytes(wheel_velocities);
+            res = send_pwm_duty_bytes(wheel_velocities);
         } else {
             wheel_velocities[front_left] = left_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[back_left] = left_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[front_right] = right_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
             wheel_velocities[back_right] = right_vel * wheel_reduction_ * wheel_encoder_cpr_ / (2.0 * M_PI * wheel_radius_);
-            send_target_velocity_bytes(wheel_velocities);
+            target_velocities_ = wheel_velocities;
+            res = send_target_velocity_bytes(wheel_velocities);
+        }
+        if (!res) {
+            enable_timers(false);
         }
 
     }
@@ -592,10 +452,10 @@ private:
             }
 
             RCLCPP_INFO(this->get_logger(), "Motor Directions: %s,%s,%s,%s",
-                pkt.motor_swap_dirs[0] ? "FL: Swapped " : " ",
-                pkt.motor_swap_dirs[1] ? "FR: Swapped " : " ",
-                pkt.motor_swap_dirs[2] ? "BL: Swapped " : " ",
-                pkt.motor_swap_dirs[3] ? "BR: Swapped " : " ");
+                pkt.motor_swap_dirs[0] ? "FL: Swapped " : "Not Swapped ",
+                pkt.motor_swap_dirs[1] ? "FR: Swapped " : "Not Swapped ",
+                pkt.motor_swap_dirs[2] ? "BL: Swapped " : "Not Swapped ",
+                pkt.motor_swap_dirs[3] ? "BR: Swapped " : "Not Swapped ");
 
             RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f", pkt.max_dutycycle);
             RCLCPP_INFO(this->get_logger(), "Setted new maximum velocity: %.3f", pkt.max_velocity);
@@ -604,12 +464,192 @@ private:
             RCLCPP_INFO(this->get_logger(), "Setted new PID boundaries: p:%f, i:%f, d:%f", pkt.p_bound, pkt.i_bound, pkt.d_bound);
             RCLCPP_INFO(this->get_logger(), "Setted new motor control rate: %f Hz", pkt.control_hz);
             RCLCPP_INFO(this->get_logger(), "Setted new feedback rate: %f Hz", pkt.feedback_hz);
-            RCLCPP_INFO(this->get_logger(), "%s open loop control", pkt.is_open_loop ? "Enabled" : "Disabled");
+            RCLCPP_INFO(this->get_logger(), "Enabled %s control", pkt.is_open_loop ? "open loop" : "closed loop");
 
             return true;
         } catch (std::runtime_error& err) {
             RCLCPP_ERROR(this->get_logger(), "Failed to initialize device");
             return false;
+        }
+    }
+
+    // Send target wheel velocities
+    bool send_target_velocity_bytes(const std::array<float, 4>& target_velocities) {
+        MobilityCommandPacket pkt {};
+
+        pkt.command_id = MobilityCommands::set_velocity;
+        pkt.value1 = target_velocities[0];
+        pkt.value2 = target_velocities[1];
+        pkt.value3 = target_velocities[2];
+        pkt.value4 = target_velocities[3];
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to send target velocities to device");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // Send PWM duty cycles
+    bool send_pwm_duty_bytes(const std::array<float, 4>& duties) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_dutycycle;
+        pkt.value1 = duties[0];
+        pkt.value2 = duties[1];
+        pkt.value3 = duties[2];
+        pkt.value4 = duties[3];
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to send PWM dutycycles to device");
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // Send maximum PWM duty
+    bool send_max_pwm_duty_bytes(float max_pwm_duty) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_maximum_dutycycle;
+        pkt.value1 = max_pwm_duty;
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set maximum PWM dutycycle");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted maximum PWM dutycycle: %f", max_pwm_duty);
+            return true;
+        }
+    }
+
+    // Send velocity filter cutoff
+    bool send_lowpass_cutoff_bytes(float fc) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_lowpass_fc;
+        pkt.value1 = fc;
+
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set velocity filter cutoff");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new velocity filter cutoff: %f Hz", fc);
+            return true;
+        }
+    }
+
+    // Send PID parameters
+    bool send_pid_params_bytes(float kp, float ki, float kd) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_pid_params;
+        pkt.value1 = kp;
+        pkt.value2 = ki;
+        pkt.value3 = kd;
+
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set PID parameters");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new PID parameters: kp:%f, ki:%f, kd:%f", kp, ki, kd);
+            return true;
+        }
+    }
+
+    // Send PID bounds
+    bool send_pid_bounds_bytes(float p_bound, float i_bound, float d_bound) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_pid_bounds;
+        pkt.value1 = p_bound;
+        pkt.value2 = i_bound;
+        pkt.value3 = d_bound;
+
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set PID boundaries");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new PID boundaries: p:%f, i:%f, d:%f", p_bound, i_bound, d_bound);
+            return true;
+        }
+    }
+
+    // Send feedforward parameters
+    bool send_feedforward_params_bytes(float kv, float voff) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_ff_params;
+        pkt.value1 = kv;
+        pkt.value2 = 0.0f; // ka
+        pkt.value3 = 0.0f; // kj
+        pkt.value4 = voff;
+
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set Feed Forward parameters");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new Feed Forward parameters: kv:%f, v_off:%f", kv, voff);
+            return true;
+        }
+    }
+
+    // Send maximum velocity
+    bool send_max_velocity_bytes(float max_vel) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_max_velocity;
+        pkt.value1 = max_vel;
+        protocol_->send_command_packet(pkt);
+        RCLCPP_INFO(this->get_logger(), "Setted new maximum velocity: %.3f", max_vel);
+        return true;
+    }
+
+    // Send feedback rate
+    bool send_feedback_rate_bytes(float feedback_rate_hz) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_feedback_hz;
+        pkt.value1 = feedback_rate_hz;
+
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to feedback rate");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new feedback rate: %f Hz", feedback_rate_hz);
+            return true;
+        }
+    }
+
+    // Send motor control rate
+    bool send_motor_control_rate_bytes(float motor_control_rate_hz) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::set_control_hz;
+        pkt.value1 = motor_control_rate_hz;
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to set motor control rate");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Setted new motor control rate: %f Hz", motor_control_rate_hz);
+            return true;
+        }
+    }
+
+    // Open loop enable / disable
+    bool send_open_loop_enable_bytes(bool enable) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::open_loop_enable;
+        pkt.value1 = enable ? 1.0f : 0.0f;
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to enable/disable open loop control");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Enabled %s Control", enable ? "Open Loop" : "Closed Loop");
+        }
+    }
+
+    // Start / Stop controller
+    bool send_start_stop_bytes(bool start) {
+        MobilityCommandPacket pkt {};
+        pkt.command_id = MobilityCommands::control_enable;
+        pkt.value1 = start ? 1.0f : 0.0f;
+        if (!protocol_->send_command_packet(pkt)) {
+            RCLCPP_ERROR(this->get_logger(), "Failed to start controller");
+            return false;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Started controller");
+            return true;
         }
     }
 
@@ -645,6 +685,7 @@ private:
         pid_d_bound_ = this->declare_parameter("pid_d_bound", pid_d_bound_);
 
         is_open_loop_ = this->declare_parameter("is_open_loop", is_open_loop_);
+        encoders_connected_ = this->declare_parameter("encoders_connected", encoders_connected_);
 
         overwrite_pinout_ = this->declare_parameter("overwrite_pinout", overwrite_pinout_);
         motor_lpwm_pins_ = this->declare_parameter("motor_lpwm_pins", motor_lpwm_pins_);
