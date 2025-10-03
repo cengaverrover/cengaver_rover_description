@@ -16,20 +16,29 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-find_package(rover_mobility_interfaces REQUIRED)                  
 
+set(CXX_STANDARD 20)
 
-add_executable(control_node src/control_node.cpp)
-ament_target_dependencies(control_node rclcpp sensor_msgs nav_msgs geometry_msgs
-  tf2 tf2_ros rover_mobility_interfaces)
+add_executable(mobility_control
+  src/mobility_control_node.cpp
+  src/serialib.cpp
+  src/icommunication_protocol.cpp
+  src/usb_protocol.cpp
+  )
+target_include_directories(mobility_control PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}/include
+)
 
+ament_target_dependencies(mobility_control rclcpp sensor_msgs nav_msgs geometry_msgs
+    tf2 tf2_ros)
+  
 
 add_executable(laser_filter src/laser_filter_node.cpp)
 ament_target_dependencies(laser_filter rclcpp sensor_msgs)
 
 install(TARGETS
   laser_filter
-  control_node
+  mobility_control
   DESTINATION lib/${PROJECT_NAME})
 
 install(

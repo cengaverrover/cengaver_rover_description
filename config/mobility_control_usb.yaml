@@ -1,0 +1,66 @@
+mobility_control:
+  ros__parameters:
+
+    protocol: "usb"
+    serial_port: "/dev/ttyACM0"
+
+    command_publish_rate: 50.0
+    feedback_rate: 200.0
+    motor_control_rate: 1000.0
+
+    cmd_vel_topic: "cmd_vel"
+    odom_topic: "wheel/odom"
+    joint_states_topic: "joint_states"
+
+    wheel_joint_names: ["front_left_wheel_joint", "front_right_wheel_joint", "back_left_wheel_joint", "back_right_wheel_joint"]
+    wheel_separation: 0.788
+    wheel_radius: 0.11736
+    wheel_reduction: 100.0
+    wheel_encoder_cpr: 64.0
+
+    max_pwm_dutycycle: 80.0
+    velocity_filter_cutoff: 100.0
+
+    pid_kp: 0.01
+    pid_ki: 0.00
+    pid_kd: 0.000
+
+    pid_p_bound: 100.0
+    pid_i_bound: 50.0
+    pid_d_bound: 50.0
+
+    overwrite_pinout: true
+    motor_lpwm_pins: [2, 6, 4, 8]
+    motor_rpwm_pins: [3, 7, 5, 9]
+    motor_encoder_a_pins: [10, 14, 12, 20]
+    motor_swap_dirs: [1, 0, 0, 0]
+
+    is_open_loop: false
+
+    base_frame_id: base_link
+    odom_frame_id: odom
+
+    cmd_vel_timeout: 0.5
+
+    pose_covariance_diagonal: [0.002, 0.002, 0.0, 0.0, 0.0, 0.02]
+    twist_covariance_diagonal: [0.002, 0.0, 0.0, 0.0, 0.0, 0.02]
+
+    linear.x.has_velocity_limits: true
+    #linear.x.has_acceleration_limits: true
+    # linear.x.has_jerk_limits: false
+    linear.x.max_velocity: 2.0
+    linear.x.min_velocity: -2.0
+    #linear.x.max_acceleration: 5.0
+    #linear.x.min_acceleration: -5.0
+    # linear.x.max_jerk: NAN
+    # linear.x.min_jerk: NAN
+
+    angular.z.has_velocity_limits: true
+    #angular.z.has_acceleration_limits: true
+    # angular.z.has_jerk_limits: false
+    angular.z.max_velocity: 2.0
+    angular.z.min_velocity: -2.0
+    #angular.z.max_acceleration: 5.0
+    #angular.z.min_acceleration: -5.0
+    # angular.z.max_jerk: NAN
+    # angular.z.min_jerk: NAN
