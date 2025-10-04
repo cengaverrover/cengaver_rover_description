@@ -33,13 +33,11 @@ def generate_launch_description():
                 )]), launch_arguments={'use_ros2_control': 'false'}.items()
     )
 
-    control = Node(
-            condition=IfCondition(use_control_usb),
-            package='cengaver_rover_description',
-            executable='mobility_control',
-            name='mobility_control',
-            output='screen',
-            parameters=[os.path.join(pkg_path, 'config', 'mobility_control_usb.yaml')],
+    mobility_controller = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('mobility_controller'),'launch','mobility_usb.launch.py')
+        ),
+        condition=IfCondition(use_control_usb)
     )
     
     usb_cam = Node(
@@ -54,7 +52,17 @@ def generate_launch_description():
 
     # Launch them all!
     return LaunchDescription([
+        
+        DeclareLaunchArgument(
+            'use_control_usb',
+            default_value='false',
+            description='Use usb mobility controller if true'),
+        DeclareLaunchArgument(
+            'use_usb_cam',
+            default_value='false',
+            description='Use usb cam if true'),
+        
         rsp,
-        control,
+        mobility_controller,
         usb_cam
     ])
