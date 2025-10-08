@@ -26,6 +26,8 @@ def generate_launch_description():
 
     use_control_usb = LaunchConfiguration('use_control_usb')
     use_usb_cam = LaunchConfiguration('use_usb_cam')
+    use_ds4 = LaunchConfiguration('use_ds4')
+    use_rplidar = LaunchConfiguration('use_rplidar')
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
@@ -33,11 +35,40 @@ def generate_launch_description():
                 )]), launch_arguments={'use_ros2_control': 'false'}.items()
     )
 
-    mobility_controller = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('mobility_controller'),'launch','mobility_usb.launch.py')
-        ),
-        condition=IfCondition(use_control_usb)
+    rplidar = Node(
+            condition=IfCondition(use_rplidar),
+            package='rplidar_ros',
+            executable='rplidar_composition',
+            name='rplidar_composition',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'rplidar_config.yaml')],
+    )
+
+    ds4_receiver = Node(
+            condition=IfCondition(use_ds4),
+            package='rover_teleoperation',
+            executable='joy_receiver',
+            name='joy_receiver',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'ds4_config.yaml')],
+    )
+
+    mobility_controller = Node(
+            condition=IfCondition(use_control_usb),
+            package='mobility_controller',
+            executable='mobility_controller',
+            name='mobility_controller',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'mobility_controller_usb.yaml')],
+    )
+    
+    manipulator_controller = Node(
+            condition=IfCondition(use_control_usb),
+            package='manipulator_controller',
+            executable='manipulator_controller',
+            name='manipulator_controller',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'manipulator_controller_usb.yaml')],
     )
     
     usb_cam = Node(
@@ -58,11 +89,21 @@ def generate_launch_description():
             default_value='false',
             description='Use usb mobility controller if true'),
         DeclareLaunchArgument(
+            'use_ds4',
+            default_value='false',
+            description='Use Duelshock 4 for joy'), 
+        DeclareLaunchArgument(
             'use_usb_cam',
             default_value='false',
             description='Use usb cam if true'),
-        
+        DeclareLaunchArgument(
+            'use_rplidar',
+            default_value='false',
+            description='Use RpLidar if true'),
         rsp,
+        ds4_receiver,
+        rplidar,
         mobility_controller,
+        manipulator_controller,
         usb_cam
     ])

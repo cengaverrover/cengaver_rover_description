@@ -1,0 +1,11 @@
+bno055_publisher:
+  ros__parameters:
+    publish_rate: 100.0
+    frame_id: "base_link"
+
+    i2c_bus_name: "/dev/i2c-1"
+    i2c_device_address: 40
+
+    accel_covariances: [67.53e-06, 67.53e-06, 67.53e-06]
+    gyro_covariances: [3.05e-06, 3.05e-06, 3.05e-06]
+    orientation_covariances: [15.9e-03, 15.9e-03, 15.9e-03]

@@ -1,0 +1,38 @@
+joy_receiver:
+  ros__parameters:
+
+    joy_topic: '/joy'
+    cmd_vel_topic: '/cmd_vel'
+    joint_states_topic: '/manipulator/joint_states'
+    joint_trajectory_topic: '/manipulator/joint_trajectory'
+
+    joy_axis_deadzone: 0.1
+
+    mode_switch_button: 2
+
+    linear_x_joy_axis: 1
+    angular_z_joy_axis: 0
+    throttle_joy_axis: 5
+    turbo_enable_button: 5
+    joy_enable_button: 4
+
+    joint_1_axis: 1
+    joint_2_axis: 0
+    joint_3_axis: 4
+
+    gripper_close_axis: 5
+    gripper_open_axis: 2
+    gripper_rotate_right_button: 5
+    gripper_rotate_left_button: 4
+
+    joints_gain_increase_axis: 7
+
+    maximum_linear_x_velocity: 2.0
+    maximum_angular_z_velocity: 2.0
+
+    joint_accelerations: [3.1416, 3.1416, 3.1416]
+
+    cmd_vel_publish_rate: 50.0
+    joint_trajectory_publish_rate: 50.0
+
+    joy_timeout: 0.5
