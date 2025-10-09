@@ -28,11 +28,21 @@ def generate_launch_description():
     use_usb_cam = LaunchConfiguration('use_usb_cam')
     use_ds4 = LaunchConfiguration('use_ds4')
     use_rplidar = LaunchConfiguration('use_rplidar')
+    use_bno055 = LaunchConfiguration('use_bno055')
 
     rsp = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource([os.path.join(
                     get_package_share_directory(package_name),'launch','rsp.launch.py'
                 )]), launch_arguments={'use_ros2_control': 'false'}.items()
+    )
+    
+    bno055 = Node(
+            condition=IfCondition(use_bno055),
+            package='bno055_ros2',
+            executable='bno055_publisher',
+            name='bno055_node',
+            output='screen',
+            parameters=[os.path.join(pkg_path, 'config', 'bno055_config.yaml')],
     )
 
     rplidar = Node(
@@ -100,9 +110,14 @@ def generate_launch_description():
             'use_rplidar',
             default_value='false',
             description='Use RpLidar if true'),
+        DeclareLaunchArgument(
+            'use_bno055',
+            default_value='false',
+            description='Use BNO055 if true'),
         rsp,
         ds4_receiver,
         rplidar,
+        bno055,
         mobility_controller,
         manipulator_controller,
         usb_cam
