@@ -1,19 +1,20 @@
 manipulator_controller:
   ros__parameters:
     protocol: "usb"
-    device_id: 1701538158
 
-    command_publish_rate: 100.0
-    feedback_rate: 100.0
+    command_publish_rate: 200.0
+    feedback_rate: 50.0
     motor_control_rate: 1000.0
+
+    reconnection_retry_period: 1.0
 
     joint_trajectory_topic: "/manipulator/joint_trajectory"
     joint_states_topic: "/manipulator/joint_states"
 
     manipulator_joint_names: ["joint_1", "joint_2", "joint_3", "gripper_1", "gripper_2", "gripper_3"]
 
-    max_pwm_dutycycle: 80.0
-    velocity_filter_cutoff: 100.0
+    max_pwm_dutycycle: 100.0
+    velocity_filter_cutoff: 50.0
 
     pid_kp: 0.0
     pid_ki: 0.0
@@ -46,23 +47,3 @@ manipulator_controller:
     base_frame_id: base_link
 
     joint_trajectory_timeout: 0.5
-
-    linear.x.has_velocity_limits: true
-    #linear.x.has_acceleration_limits: true
-    # linear.x.has_jerk_limits: false
-    linear.x.max_velocity: 2.0
-    linear.x.min_velocity: -2.0
-    #linear.x.max_acceleration: 5.0
-    #linear.x.min_acceleration: -5.0
-    # linear.x.max_jerk: NAN
-    # linear.x.min_jerk: NAN
-
-    angular.z.has_velocity_limits: true
-    #angular.z.has_acceleration_limits: true
-    # angular.z.has_jerk_limits: false
-    angular.z.max_velocity: 2.0
-    angular.z.min_velocity: -2.0
-    #angular.z.max_acceleration: 5.0
-    #angular.z.min_acceleration: -5.0
-    # angular.z.max_jerk: NAN
-    # angular.z.min_jerk: NAN

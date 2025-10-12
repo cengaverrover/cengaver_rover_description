@@ -96,11 +96,11 @@ def generate_launch_description():
         
         DeclareLaunchArgument(
             'use_control_usb',
-            default_value='false',
+            default_value='true',
             description='Use usb mobility controller if true'),
         DeclareLaunchArgument(
             'use_ds4',
-            default_value='false',
+            default_value='true',
             description='Use Duelshock 4 for joy'), 
         DeclareLaunchArgument(
             'use_usb_cam',

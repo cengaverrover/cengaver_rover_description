@@ -19,7 +19,7 @@ mobility_controller:
     wheel_encoder_cpr: 64.0
 
     max_pwm_dutycycle: 80.0
-    velocity_filter_cutoff: 100.0
+    velocity_filter_cutoff: 30.0
 
     pid_kp: 0.00625 
     pid_ki: 0.00
@@ -35,7 +35,7 @@ mobility_controller:
     motor_encoder_a_pins: [10, 14, 12, 20]
     motor_swap_dirs: [1, 0, 0, 0]
 
-    is_open_loop: false
+    is_open_loop: true
     encoders_connected: true
 
     base_frame_id: base_link
@@ -47,21 +47,25 @@ mobility_controller:
     twist_covariance_diagonal: [0.002, 0.0, 0.0, 0.0, 0.0, 0.02]
 
     linear.x.has_velocity_limits: true
-    #linear.x.has_acceleration_limits: true
-    # linear.x.has_jerk_limits: false
     linear.x.max_velocity: 2.0
     linear.x.min_velocity: -2.0
-    #linear.x.max_acceleration: 5.0
-    #linear.x.min_acceleration: -5.0
+
+    linear.x.has_acceleration_limits: true
+    linear.x.max_acceleration: 5.0
+    linear.x.min_acceleration: -5.0
+
+    # linear.x.has_jerk_limits: false
     # linear.x.max_jerk: NAN
     # linear.x.min_jerk: NAN
 
     angular.z.has_velocity_limits: true
-    #angular.z.has_acceleration_limits: true
-    # angular.z.has_jerk_limits: false
     angular.z.max_velocity: 2.0
     angular.z.min_velocity: -2.0
-    #angular.z.max_acceleration: 5.0
-    #angular.z.min_acceleration: -5.0
+
+    angular.z.has_acceleration_limits: true
+    angular.z.max_acceleration: 5.0
+    angular.z.min_acceleration: -5.0
+    
+    # angular.z.has_jerk_limits: false
     # angular.z.max_jerk: NAN
     # angular.z.min_jerk: NAN
