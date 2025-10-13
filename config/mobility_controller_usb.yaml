@@ -18,7 +18,7 @@ mobility_controller:
     wheel_reduction: 100.0
     wheel_encoder_cpr: 64.0
 
-    max_pwm_dutycycle: 80.0
+    max_pwm_dutycycle: 40.0
     velocity_filter_cutoff: 30.0
 
     pid_kp: 0.00625 
@@ -30,10 +30,10 @@ mobility_controller:
     pid_d_bound: 50.0
 
     overwrite_pinout: true
-    motor_lpwm_pins: [2, 6, 4, 8]
-    motor_rpwm_pins: [3, 7, 5, 9]
+    motor_lpwm_pins: [2, 4, 6, 8]
+    motor_rpwm_pins: [3, 5, 7, 9]
     motor_encoder_a_pins: [10, 14, 12, 20]
-    motor_swap_dirs: [1, 0, 0, 0]
+    motor_swap_dirs: [0, 1, 1, 0]
 
     is_open_loop: true
     encoders_connected: true
