@@ -2,7 +2,7 @@ manipulator_controller:
   ros__parameters:
     protocol: "usb"
 
-    command_publish_rate: 200.0
+    command_publish_rate: 60.0
     feedback_rate: 50.0
     motor_control_rate: 1000.0
 
@@ -31,8 +31,8 @@ manipulator_controller:
     overwrite_pinout: true
     joint_dir_pins: [3, 7, 9]
     joint_pul_pins: [2, 6, 8]
-    gripper_lpwm_pins: [14, 10, 12]
-    gripper_rpwm_pins: [15, 11, 13]
+    gripper_lpwm_pins: [14, 12, 10]
+    gripper_rpwm_pins: [15, 13, 11]
 
     joint_swap_dirs: [0, 0, 0]
     gripper_swap_dirs: [0, 0, 0]

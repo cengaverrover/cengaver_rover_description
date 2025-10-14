@@ -4,7 +4,7 @@ mobility_controller:
     protocol: "usb"
     device_id: 1701538158
 
-    command_publish_rate: 50.0
+    command_publish_rate: 60.0
     feedback_rate: 200.0
     motor_control_rate: 1000.0
 
@@ -32,7 +32,7 @@ mobility_controller:
     overwrite_pinout: true
     motor_lpwm_pins: [2, 4, 6, 8]
     motor_rpwm_pins: [3, 5, 7, 9]
-    motor_encoder_a_pins: [10, 14, 12, 20]
+    motor_encoder_a_pins: [10, 12, 14, 20]
     motor_swap_dirs: [0, 1, 1, 0]
 
     is_open_loop: true
