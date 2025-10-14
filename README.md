@@ -12,6 +12,7 @@ This package contains the URDF (Unified Robot Description Format) files and laun
     git clone https://github.com/alpertng02/rover_teleoperation.git
     git clone https://github.com/alpertng02/mobility_controller.git
     git clone https://github.com/alpertng02/manipulator_controller.git
+    git clone --recurse-submodules https://github.com/cengaverrover/bno055_ros2.git
     ```
 
 2. Build the package:
@@ -37,6 +38,7 @@ You can use the following launch options to customize the launch files:
 - `use_foxglove:=true/false` - Enable or disable Foxglove bridge. Default = true.
 - `use_control_usb:=true/false` - Enable or disable control through usb. Default = true.
 - `use_ds4:=true/false` - Enable or disable Duelshock 4 joy receiver. Default = false.
+- `use_bno055:=true/false` - Enable or disable BNO055. Default = false.
 - `use_twist_mux:=true/false` - Enable or disable Twist Mux. Default = false.
 - `use_sim_time:=true/false` - Enable or disable sim_time. Default = false for rsp, true for sim launch files.
 
