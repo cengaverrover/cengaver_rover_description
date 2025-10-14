@@ -5,7 +5,7 @@ mobility_controller:
     device_id: 1701538158
 
     command_publish_rate: 60.0
-    feedback_rate: 200.0
+    feedback_rate: 100.0
     motor_control_rate: 1000.0
 
     cmd_vel_topic: "cmd_vel"
@@ -18,7 +18,7 @@ mobility_controller:
     wheel_reduction: 100.0
     wheel_encoder_cpr: 64.0
 
-    max_pwm_dutycycle: 40.0
+    max_pwm_dutycycle: 80.0
     velocity_filter_cutoff: 30.0
 
     pid_kp: 0.00625 
