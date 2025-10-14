@@ -31,7 +31,7 @@ joy_receiver:
     maximum_angular_z_velocity: 2.0
 
     joints_have_acceleration_limits: true 
-    joint_accelerations_limits: [0.314159, 0.314159, 0.314159]
+    joint_accelerations_limits: [0.6, 0.6, 0.6]
 
     cmd_vel_publish_rate: 60.0
     joint_trajectory_publish_rate: 60.0
